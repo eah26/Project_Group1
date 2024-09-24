@@ -1,0 +1,9 @@
+---
+title: "practice"
+format: html
+editor: visual
+---
+
+```{r}
+practice <- xy
+```
