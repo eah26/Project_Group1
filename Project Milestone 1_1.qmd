@@ -28,7 +28,7 @@ Each team member has made at least one commit to repository -
 
 Sarah - Yes (practice.qmd)
 
-Elizabeth -
+Elizabeth - Yes (this Project Milestone qmd)
 
 Innocent -
 
