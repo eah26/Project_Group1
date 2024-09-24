@@ -1,0 +1,37 @@
+---
+title: "Milestone 1"
+format: pdf
+editor: visual
+---
+
+## Project Milestone #1
+
+### Details
+
+Project Option Selection: Scenario 1:Infectious Disease Outbreak(simulated) in California
+
+Git Repository Link: https://github.com/eah26/Project_Group1.git
+
+#### Roles and Responsibilities:
+
+Preferred Communication Method: WhatsApp
+
+Preferred Meeting Times & Frequency: Weekly Mondays at 8pm via Zoom; other Zoom meetings as needed during the week
+
+Method for Tracking Progress: WhatsApp - frequent updates about progress, group roles, when files have been pushed; Roles will be assigned during the Monday zoom for the next week's assignment
+
+Point person for contacting course facilitators: Elizabeth Hawkes
+
+Potential times to meet? - Sarah can meet Tuesdays from 1-3 for Sadaf's appointment hours; Elizabeth can attend office hours Saturday 10-12 if needed.
+
+Each team member has made at least one commit to repository -
+
+Sarah - Yes (practice.qmd)
+
+Elizabeth -
+
+Innocent -
+
+Added teaching team as collaborators- YES
+
+##This file is part of the Project_Group1 folder
