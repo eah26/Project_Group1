@@ -1,0 +1,67 @@
+---
+title: "Practice Dataset Import"
+format: html
+editor: visual
+---
+
+## CA Morbidity Dataset (sim_novelid_CA.csv)
+
+Description: Simulated novel infectious respiratory disease case reporting for California (excluding LA County) containing case severity by demographic categories (age, race, sex) and county for the time period between October 2nd, 2022 and June 4th, 2023
+Relation: This dataset will be combined with a similar simulated infectious case reporting from LA county to represent simulated morbidity for the entire state of California for this respiratory disease outbreak.  This will also be combined with a population dataset containing population estimates for each county and demographic.  These will be used to analyze outcomes and trends in cases by demographic or geographic populations. 
+
+# Import of Dataset
+
+```{r}
+library (dplyr)
+
+#import from GitHub
+CA_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_CA.csv")
+
+#Look at column names
+head (CA_data)  #column names are already in snake case
+
+#Look at summary and class of data
+summary (CA_data)
+
+#Check for NA values in the dataset (there are none)
+colSums(is.na(CA_data))
+
+#Check for empty strings or blank spaces as well (there are none)
+CA_data %>% summarize_all(~ sum(. == ""))
+```
+
+# Identify data types for 5+ data elements/columns/variables
+
+To complete our analysis we will need the county information, age, sex, race_ethnicity, cumulative_infected and cumulative_severe columns. ??Also time_int for date of diagnosis - do we need new infections and new severe as well?
+
+```{r}
+#Determine data types for each column
+
+str(CA_data)
+
+#We will need to convert time_int to date format.  The other number categories are already integers and the county, age, sex are characters.  The race_ethnicity will need to be converted to character for analysis?
+```
+# Provide a basic description of the 5+ data elements
+
+
+
+Determining date frame of imported data
+```{r}
+#install.packages("MMWRweek")
+library(MMWRweek)# Create MMWR week strings
+
+
+mmwr_weeks <- c("202240", "202323")
+
+# Convert to data frame format: Year and Week Number
+mmwr_data <- data.frame(
+  year = as.numeric(substr(mmwr_weeks, 1, 4)),
+  week = as.numeric(substr(mmwr_weeks, 5, 6))
+)
+
+# Use MMWRweek package to convert to date
+dates <- MMWRweek2Date(mmwr_data$year, mmwr_data$week)
+
+# Print the dates
+print(dates)
+```
