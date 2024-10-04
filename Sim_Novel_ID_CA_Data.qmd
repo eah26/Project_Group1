@@ -6,8 +6,8 @@ editor: visual
 
 ## CA Morbidity Dataset (sim_novelid_CA.csv)
 
-Description: Simulated novel infectious respiratory disease case reporting for California (excluding LA County) containing case severity by demographic categories (age, race, sex) and county for the time period between October 2nd, 2022 and June 4th, 2023
-Relation: This dataset will be combined with a similar simulated infectious case reporting from LA county to represent simulated morbidity for the entire state of California for this respiratory disease outbreak.  This will also be combined with a population dataset containing population estimates for each county and demographic.  These will be used to analyze outcomes and trends in cases by demographic or geographic populations. 
+Description: Simulated novel infectious respiratory disease case reporting for California (excluding LA County) containing case severity by demographic categories (age, race, sex) and county for the time period between October 2nd, 2022 and June 4th, 2023.
+Relation: This dataset will be combined with a similar simulated infectious case reporting from LA county to represent simulated morbidity for the entire state of California for this respiratory disease outbreak. This will also be combined with a population dataset containing population estimates for each county and demographic. These will be used to analyze outcomes and trends in cases by demographic or geographic populations. 
 
 # Import of Dataset
 
