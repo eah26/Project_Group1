@@ -6,7 +6,7 @@ editor: visual
 
 ## CA Morbidity Dataset (sim_novelid_CA.csv)
 
-Description: Simulated novel infectious respiratory disease case reporting for California (excluding LA County) containing case severity by demographic categories (age, race, sex) and county for the time period between October 2nd, 2022 and June 4th, 2023.
+Description: Simulated novel infectious respiratory disease case reporting for California (excluding LA County) containing case severity by demographic categories (age, race, sex) and county for the time period between October 2nd, 2022 and June 4th, 2023???
 Relation: This dataset will be combined with a similar simulated infectious case reporting from LA county to represent simulated morbidity for the entire state of California for this respiratory disease outbreak. This will also be combined with a population dataset containing population estimates for each county and demographic. These will be used to analyze outcomes and trends in cases by demographic or geographic populations. 
 
 # Import of Dataset
@@ -32,20 +32,70 @@ CA_data %>% summarize_all(~ sum(. == ""))
 
 # Identify data types for 5+ data elements/columns/variables
 
-To complete our analysis we will need the county information, age, sex, race_ethnicity, cumulative_infected and cumulative_severe columns. ??Also time_int for date of diagnosis - do we need new infections and new severe as well?
+To complete our analysis we will need the county information, age, sex, race_ethnicity, cumulative_infected, cumulative uninfected and cumulative_severe columns. If we decide to look at the progression of cases over the outbreak we will also need the time_int column for date of diagnosis.
 
 ```{r}
 #Determine data types for each column
 
 str(CA_data)
-
-#We will need to convert time_int to date format.  The other number categories are already integers and the county, age, sex are characters.  The race_ethnicity will need to be converted to character for analysis?
+#county = character; this is okay
+#age_cat = character; this is fine as we are looking at age ranges
+#sex = character; this is okay
+#race_ethnicity = integer; this will need to be converted to character with each number coding for a specific race
+#time_int = integer; this should be converted to a date format
+#cumulative_infected = integer; this is fine
+#cumulative_unrecovered = integer; this is fine
+#cumulative_severe = integer; this is fine
 ```
 # Provide a basic description of the 5+ data elements
 
+```{r}
+#County - There are 57 counties included in the dataset in the format ex. Alameda County. There are 1736  rows per county (all are equal)
+unique (CA_data$county)
+table (CA_data$county)
+
+#Age_cat - There are 4 age categories (0-17, 18-49, 50-64 and 65+), 24738 rows for each.
+unique (CA_data$age_cat)
+table (CA_data$age_cat)
+
+#Sex - There are two categories - male and female. 49476 rows for each
+unique(CA_data$sex)
+table (CA_data$sex)
+
+#Race_ethnicity - there are seven categories of race, with 14136 rows each.  These categories correspond as follows:  1 = "White, Non-Hispanic", 2 = "Black, Non-Hispanic", 3 = "American Indian or Alaska Native, Non-Hispanic", 4 = "Asian, Non-Hispanic", 5 = "Native Hawaiian or Pacific Islander, Non-Hispanic", 6 = "Multiracial (two or more of above races), Non-Hispanic", 7 = "Hispanic (any race)", 9 = "Unknown(there are none in our dataset)
+table (CA_data$race_ethnicity)
+
+#time_int - the excel file says that this corresponds to the respiratory season week and year. This is what was used for each week to record cases.  There are 31 weeks represented in this dataset.  The excel files says the dates were from October 2nd, 2022 and June 4th, 2023 but from these values I only see a range from 202322 to 202352, which corresponds to May 28th, 2023 to Dec 30th, 2023.
+unique (CA_data$time_int)
+
+#cumulative_infected - the mean number of infected is 584.7 individuals, median is 15 and range is 0 to 80173.  The cumulative totals are for each county categorized by age, sex and race.
+mean (CA_data$cumulative_infected)
+median (CA_data$cumulative_infected)
+range (CA_data$cumulative_infected)
+
+#cumulative_unrecovered - the mean number of unrecovered is 66.42 individuals, median is 1 and range is 0 to 9398.  The cumulative totals are for each county categorized by age, sex and race.
+mean (CA_data$cumulative_unrecovered)
+median (CA_data$cumulative_unrecovered)
+range (CA_data$cumulative_unrecovered)
+
+#cumulative_severe - the mean number of severe is 13.98 individuals, median is 0 and range is 0 to 2215.  The cumulative totals are for each county categorized by age, sex and race.
+mean (CA_data$cumulative_severe)
+median (CA_data$cumulative_severe)
+range (CA_data$cumulative_severe)
+```
+# Describe cleaning that each data source may need
+As stated above, race_ethnicity will need to be changed from numeric to character description and the date will need to be changed from epi week to date format.  
+
+In order to join this data with the LA county dataset, the cumulative unrecovered should be converted to cumulative recovered.  Otherwise, the LA county dataset can be joined to this CA county dateset. The column names may need to be changed so that they match exactly, but both datasets have age, sex, race, date, cumulative infected and cumulative severe data.
+
+The CA population dataset has information about county, age, sex, race and population size. This should allow us to see the proportion of cases in each county by those categories to determine if certain races or counties are more disproportionately affected.  This will require some data cleaning and adding of columns to determine % affected by total population for each category.
+
+Depending on how we decided to interpret the data, there may need to be some cleaning to combine county numbers for all sexes or for all races or for all age groups, depending on how we want to present the data.  We might want to create graphs for each of the above demographic factors.  We also may need to do some data cleaning to combine all cases for each county to compare % cases by geographic area. 
 
 
-Determining date frame of imported data
+
+
+Determining date frame of imported data according to excel file
 ```{r}
 #install.packages("MMWRweek")
 library(MMWRweek)# Create MMWR week strings
