@@ -6,8 +6,7 @@ editor: visual
 
 ## CA Morbidity Dataset (sim_novelid_CA.csv)
 
-Description: Simulated novel infectious respiratory disease case reporting for California (excluding LA County) containing case severity by demographic categories (age, race, sex) and county for the time period between October 2nd, 2022 and June 4th, 2023???
-Relation: This dataset will be combined with a similar simulated infectious case reporting from LA county to represent simulated morbidity for the entire state of California for this respiratory disease outbreak. This will also be combined with a population dataset containing population estimates for each county and demographic. These will be used to analyze outcomes and trends in cases by demographic or geographic populations. 
+Description: Simulated novel infectious respiratory disease case reporting for California (excluding LA County) containing case severity by demographic categories (age, race, sex) and county for the time period between October 2nd, 2022 and June 4th, 2023??? Relation: This dataset will be combined with a similar simulated infectious case reporting from LA county to represent simulated morbidity for the entire state of California for this respiratory disease outbreak. This will also be combined with a population dataset containing population estimates for each county and demographic. These will be used to analyze outcomes and trends in cases by demographic or geographic populations.
 
 # Import of Dataset
 
@@ -46,6 +45,7 @@ str(CA_data)
 #cumulative_unrecovered = integer; this is fine
 #cumulative_severe = integer; this is fine
 ```
+
 # Provide a basic description of the 5+ data elements
 
 ```{r}
@@ -82,19 +82,160 @@ mean (CA_data$cumulative_severe)
 median (CA_data$cumulative_severe)
 range (CA_data$cumulative_severe)
 ```
+
 # Describe cleaning that each data source may need
-As stated above, race_ethnicity will need to be changed from numeric to character description and the date will need to be changed from epi week to date format.  
 
-In order to join this data with the LA county dataset, the cumulative unrecovered should be converted to cumulative recovered.  Otherwise, the LA county dataset can be joined to this CA county dateset. The column names may need to be changed so that they match exactly, but both datasets have age, sex, race, date, cumulative infected and cumulative severe data.
+As stated above, race_ethnicity will need to be changed from numeric to character description and the date will need to be changed from epi week to date format.
 
-The CA population dataset has information about county, age, sex, race and population size. This should allow us to see the proportion of cases in each county by those categories to determine if certain races or counties are more disproportionately affected.  This will require some data cleaning and adding of columns to determine % affected by total population for each category.
+In order to join this data with the LA county dataset, the cumulative unrecovered should be converted to cumulative recovered. Otherwise, the LA county dataset can be joined to this CA county dateset. The column names may need to be changed so that they match exactly, but both datasets have age, sex, race, date, cumulative infected and cumulative severe data.
 
-Depending on how we decided to interpret the data, there may need to be some cleaning to combine county numbers for all sexes or for all races or for all age groups, depending on how we want to present the data.  We might want to create graphs for each of the above demographic factors.  We also may need to do some data cleaning to combine all cases for each county to compare % cases by geographic area. 
+The CA population dataset has information about county, age, sex, race and population size. This should allow us to see the proportion of cases in each county by those categories to determine if certain races or counties are more disproportionately affected. This will require some data cleaning and adding of columns to determine % affected by total population for each category.
 
-
-
+Depending on how we decided to interpret the data, there may need to be some cleaning to combine county numbers for all sexes or for all races or for all age groups, depending on how we want to present the data. We might want to create graphs for each of the above demographic factors. We also may need to do some data cleaning to combine all cases for each county to compare % cases by geographic area.
 
 Determining date frame of imported data according to excel file
+
+# Data set two
+
+```{r}
+
+#Dataset two (sim_novelid_LACounty.csv)
+
+#Description of dataset two
+
+#This data set contains morbidity and population data by similar demographic and geographic categories for Los Angeles county to include sex, race&ethnicity and age category. Morbidity data includes newly diagnosed cases of the respiratory infection, infected cumulative cases, new unrecovered cases, cumulative unrecovered cases, new severe cases and cumulative severe cases. Relation: This data set will be combined with data set 1 containing data from other counties in California, and data set 3 containing population information on counties in California. 
+
+
+library(tidyverse)
+library(snakecase)
+
+LACounty_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_LACounty.csv")
+
+
+#check column titles (are in upper case)
+head(LACounty_data)
+
+#Clean column titles
+
+colnames(LACounty_data) <- to_snake_case(colnames(LACounty_data)) #Column names converted to snake case
+
+#check summary and class of data
+summary(LACounty_data)
+
+#check for NA values (the entire column DT_REPORT has NA values)
+is.na(LACounty_data)
+
+#check for empty strings or blank spaces (NA values seen)
+LACounty_data %>% summarize_all(~ sum(. == ""))
+
+#Column for DT_DX, we shall change this into standard date format YYYY-MM-DD format
+
+LACounty_data$dt_dx <- as.Date(LACounty_data$dt_dx, format = "%d%b%Y")
+
+# Check the result
+head(LACounty_data$dt_dx)
+ 
+LACounty_data
+```
+
+# Identify data types for 5+ data elements
+
+```{r}
+
+str(LACounty_data)
+
+LACounty_data %>% summarize_all(~ sum(. == ""))  #We have NA values under the entire DT_REPORT column 
+
+
+#Data type for each column, to be cleaned into snake case
+
+#DT_DX = character data
+#AGE_CATEGORY = character data which is fine since we're dealing with ranges
+#SEX = character data
+#RACE_ETH = character data
+#DT_REPORT = character data
+#DX_NEW = missing data shown with logical values "NA" 
+#INFECTED_CUMULATIVE = integer
+#UNRECOVERED_NEW = integer
+#UNRECOVERED_CUMULATIVE = integer
+#SEVERE_NEW = integer
+#SEVERE_CUMULATIVE = integer
+
+
+#Provide a basic explanation of 5+ data elements
+
+#Data shows 1736 observations/rows and 11 variables/columns
+
+
+#DT_DX - Date of reported cases runs from 29-May-2023 to 25-Dec-2023, about 8 months reported with 56 observations under each month
+unique(LACounty_data$dt_dx)
+table(LACounty_data$dt_dx)
+
+#AGE_CATEGORY - There are 434 observations under each category. The age categories are 0-17, 18-49, 50-64 and 65+
+unique(LACounty_data$age_category)
+table(LACounty_data$age_category)
+
+#SEX - We have 868 females and 868 males
+unique(LACounty_data$sex)
+table(LACounty_data$sex)
+
+#RACE_ETH - Races&ethinity data collected includes "American Indian or Alaska Native, Non-Hispanic", "Asian, Non-Hispanic", "Black, Non-Hispanic",  "Hispanic (any race)","Multiracial (two or more of above races)", Non-Hispanic","Native Hawaiian or Pacific Islander, Non-Hispanic","White, Non-Hispanic" with every category containing 248 observations
+                                                  
+unique(LACounty_data$race_eth)
+table(LACounty_data$race_eth)
+
+#DT_REPORT - Entire column has missing data represented as "NA"
+unique(LACounty_data$dt_report)
+table(LACounty_data$dt_report)
+
+
+#DX_NEW -  the mean number of infected is 510.4585 individuals, median is 46 and range is 0 to 12110.  
+
+mean (LACounty_data$dx_new)
+median (LACounty_data$dx_new)
+range (LACounty_data$dx_new)
+
+
+#INFECTED_CUMULATIVE -  the mean number of cumulative infected  is 7993.7 individuals, median is 802.5 and range is 0 to 137804.  
+
+mean (LACounty_data$infected_cumulative)
+median (LACounty_data$infected_cumulative)
+range (LACounty_data$infected_cumulative)
+
+#UNRECOVERED_NEW - the mean number of unrecovered new cases is 64.18145 individuals, with a median of 3 and range from 0 to 1436
+
+mean (LACounty_data$unrecovered_new)
+median (LACounty_data$unrecovered_new)
+range (LACounty_data$unrecovered_new)
+
+#UNRECOVERED_CUMULATIVE - the mean number of unrecovered cumulatie is 927.9274 individuals, with a median of 43 and range from 0 to 16920
+
+mean (LACounty_data$unrecovered_cumulative)
+median (LACounty_data$unrecovered_cumulative)
+range (LACounty_data$unrecovered_cumulative)
+
+
+#SEVERE_NEW - the mean number of severe new cases is 14.46371 individuals, median is 0 and range is 0 to 352
+
+mean (LACounty_data$severe_new)
+median (LACounty_data$severe_new)
+range (LACounty_data$severe_new)
+
+
+#SEVERE_CUMULATIVE - the mean number of severe cumulative cases is 194.2926 individuals, median is 4 and range is 0 to 4060
+
+mean (LACounty_data$severe_cumulative)
+median (LACounty_data$severe_cumulative)
+range (LACounty_data$severe_cumulative)
+
+
+#Describe cleaning that each data source may need (Data set two)
+
+
+#We shall change the date format into "YYYY-MM-DD". The column names will be converted into snake case, a standard convention for data analysis. To merge data set two with data set 1, we shall add a column to show the county as Los Angeles. The data contains some missing values represented as NA, we could leave this as is. The rest of the data from running the str () function looks okay, integers are well represented. Age category is treated as character data which is okay since we are dealing with ranges and not specific age. 
+
+```
+
 ```{r}
 #install.packages("MMWRweek")
 library(MMWRweek)# Create MMWR week strings
@@ -187,5 +328,3 @@ The data is fairly clean but I would like to ascertain the meaning of the "pop" 
 # Print the dates
 print(dates)
 ```
-
-
