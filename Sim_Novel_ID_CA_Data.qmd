@@ -97,14 +97,14 @@ Determining date frame of imported data according to excel file
 
 # Data set two
 
+## Description of dataset two
+
+This data set contains morbidity and population data by similar demographic and geographic categories for Los Angeles county to include sex, race&ethnicity and age category. Morbidity data includes newly diagnosed cases of the respiratory infection, infected cumulative cases, new unrecovered cases, cumulative unrecovered cases, new severe cases and cumulative severe cases. **Relation:** This data set will be combined with data set 1 containing data from other counties in California, and data set 3 containing population information on counties in California.
+
 ```{r}
 
 #Dataset two (sim_novelid_LACounty.csv)
-
-#Description of dataset two
-
-#This data set contains morbidity and population data by similar demographic and geographic categories for Los Angeles county to include sex, race&ethnicity and age category. Morbidity data includes newly diagnosed cases of the respiratory infection, infected cumulative cases, new unrecovered cases, cumulative unrecovered cases, new severe cases and cumulative severe cases. Relation: This data set will be combined with data set 1 containing data from other counties in California, and data set 3 containing population information on counties in California. 
-
+ 
 
 library(tidyverse)
 library(snakecase)
@@ -228,13 +228,11 @@ mean (LACounty_data$severe_cumulative)
 median (LACounty_data$severe_cumulative)
 range (LACounty_data$severe_cumulative)
 
-
-#Describe cleaning that each data source may need (Data set two)
-
-
-#We shall change the date format into "YYYY-MM-DD". The column names will be converted into snake case, a standard convention for data analysis. To merge data set two with data set 1, we shall add a column to show the county as Los Angeles. The data contains some missing values represented as NA, we could leave this as is. The rest of the data from running the str () function looks okay, integers are well represented. Age category is treated as character data which is okay since we are dealing with ranges and not specific age. 
-
 ```
+
+# Describe cleaning that each data source may need (Data set two)
+
+We shall change the date format into "YYYY-MM-DD". The column names will be converted into snake case, a standard convention for data analysis. To merge data set two with data set 1, we shall add a column to show the county as Los Angeles. The data contains some missing values represented as NA, we could leave this as is. The rest of the data from running the str () function looks okay, integers are well represented. Age category is treated as character data which is okay since we are dealing with ranges and not specific age.
 
 ```{r}
 #install.packages("MMWRweek")
