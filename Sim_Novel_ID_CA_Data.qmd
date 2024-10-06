@@ -13,7 +13,6 @@ Relation: This dataset will be combined with a similar simulated infectious case
 
 ```{r}
 library (dplyr)
-
 #import from GitHub
 CA_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_CA.csv")
 
@@ -112,6 +111,81 @@ mmwr_data <- data.frame(
 # Use MMWRweek package to convert to date
 dates <- MMWRweek2Date(mmwr_data$year, mmwr_data$week)
 
+
+##CA Demographic and County Dataset (ca_pop_2023.csv)
+
+Description: County-level demographic data which includes health officer region, age category, sex, and race during the year 2023.
+
+Relation: This dataset will help highlight outbreak impact broken down by county and demographic information.
+
+{r}
+#import from GitHub
+
+library(dplyr)
+
+DS3 <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/ca_pop_2023.csv")
+
+#check column titles (all in snake case)
+head(DS3)
+
+#clean race variable title
+DS3 <- DS3 %>% rename(race = "race7")
+
+#check summary and class of data
+summary(DS3)
+
+#check for NA values (none)
+colSums(is.na(DS3))
+
+#check for empty strings or blank spaces (none)
+DS3 %>% summarize_all(~ sum(. == ""))
+
+
+#Identify data types for 5+ data elements/columns/variables
+
+We will need to look at county, health officer region, age, sex, and race data for our analysis.
+
+{r}
+
+#Data type of each column
+
+str(DS3)
+
+#county = character
+#health_officer_region = character
+#age_cat = character; might want to change to integer
+#sex = character
+#race = character
+
+#Provide a basic description of 5+ data elements
+
+{r}
+#county - There are 58 different counties with 1554 rows of data each.
+unique(DS3$county)
+table(DS3$county)
+
+#health_officer_region - There are 6 different health officer regions with between 15,540 and 20,202 rows per health officer region.
+unique(DS3$health_officer_region)
+table(DS3$health_officer_region)
+
+#age_cat - There are 6 different age categories: 0-4 (4060 rows), 5-11 (5684 rows), 12-17 (4872 rows), 18-49 (25984 rows), 50-65 (12180 rows), and 65+ years old (37352 rows).
+unique(DS3$age_cat)
+table(DS3$age_cat)
+
+#sex - The two sex categories are male and female with 45066 rows for each.
+unique(DS3$sex)
+table(DS3$sex)
+
+#race - There are 7 race categories with 12876 rows in each.
+unique(DS3$race)
+table(DS3$race)
+
+#Cleaning that may be needed
+
+The data is fairly clean but I would like to ascertain the meaning of the "pop" variable to determine if it is necessary. The race categories may need to be spelled out in order to align with data from the other data sets and to make them more comprehensible.
+
 # Print the dates
 print(dates)
 ```
+
+
