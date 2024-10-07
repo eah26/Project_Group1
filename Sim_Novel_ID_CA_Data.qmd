@@ -1,17 +1,22 @@
 ---
-title: "Practice Dataset Import"
+title: "Group1: Scenario 1_Milestone 2"
 format: html
 editor: visual
 ---
 
-## CA Morbidity Dataset (sim_novelid_CA.csv)
+# Group 1: Scenario 1: Milestone 2
 
-Description: Simulated novel infectious respiratory disease case reporting for California (excluding LA County) containing case severity by demographic categories (age, race, sex) and county for the time period between October 2nd, 2022 and June 4th, 2023??? Relation: This dataset will be combined with a similar simulated infectious case reporting from LA county to represent simulated morbidity for the entire state of California for this respiratory disease outbreak. This will also be combined with a population dataset containing population estimates for each county and demographic. These will be used to analyze outcomes and trends in cases by demographic or geographic populations.
+# CA Morbidity Dataset One (sim_novelid_CA.csv)
 
-# Import of Dataset
+Description: Simulated novel infectious respiratory disease case reporting for California (excluding LA County) containing case severity by demographic categories (age, race, sex) and county for the time period between May 28th, 2023 to December 30th, 2023. Relation: This dataset will be combined with a similar simulated infectious case reporting from LA county to represent simulated morbidity for the entire state of California for this respiratory disease outbreak. This will also be combined with a population dataset containing population estimates for each county and demographic. These will be used to analyze outcomes and trends in cases by demographic or geographic populations.
+
+## Import of Dataset
 
 ```{r}
 library (dplyr)
+#install.packages ("MMWRweek")
+library(MMWRweek)# Create MMWR week strings
+
 #import from GitHub
 CA_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_CA.csv")
 
@@ -28,9 +33,9 @@ colSums(is.na(CA_data))
 CA_data %>% summarize_all(~ sum(. == ""))
 ```
 
-# Identify data types for 5+ data elements/columns/variables
+## Identify data types for 5+ data elements/columns/variables
 
-To complete our analysis we will need the county information, age, sex, race_ethnicity, cumulative_infected, cumulative uninfected and cumulative_severe columns. If we decide to look at the progression of cases over the outbreak we will also need the time_int column for date of diagnosis.
+To complete our analysis we will need the county information, age, sex, race_ethnicity, cumulative_infected, cumulative unrecovered and cumulative_severe columns and possible new cases. If we decide to look at the progression of cases over the outbreak we will also need the time_int column for date of diagnosis.
 
 ```{r}
 #Determine data types for each column
@@ -40,13 +45,14 @@ str(CA_data)
 #age_cat = character; this is fine as we are looking at age ranges
 #sex = character; this is okay
 #race_ethnicity = integer; this will need to be converted to character with each number coding for a specific race
+#new_infections = integer; fine, should be a whole number
 #time_int = integer; this should be converted to a date format
 #cumulative_infected = integer; this is fine
 #cumulative_unrecovered = integer; this is fine
 #cumulative_severe = integer; this is fine
 ```
 
-# Provide a basic description of the 5+ data elements
+## Provide a basic description of the 5+ data elements
 
 ```{r}
 #County - There are 57 counties included in the dataset in the format ex. Alameda County. There are 1736  rows per county (all are equal)
@@ -64,8 +70,20 @@ table (CA_data$sex)
 #Race_ethnicity - there are seven categories of race, with 14136 rows each.  These categories correspond as follows:  1 = "White, Non-Hispanic", 2 = "Black, Non-Hispanic", 3 = "American Indian or Alaska Native, Non-Hispanic", 4 = "Asian, Non-Hispanic", 5 = "Native Hawaiian or Pacific Islander, Non-Hispanic", 6 = "Multiracial (two or more of above races), Non-Hispanic", 7 = "Hispanic (any race)", 9 = "Unknown(there are none in our dataset)
 table (CA_data$race_ethnicity)
 
-#time_int - the excel file says that this corresponds to the respiratory season week and year. This is what was used for each week to record cases.  There are 31 weeks represented in this dataset.  The excel files says the dates were from October 2nd, 2022 and June 4th, 2023 but from these values I only see a range from 202322 to 202352, which corresponds to May 28th, 2023 to Dec 30th, 2023.
+#time_int -  There are 31 weeks represented in this dataset.  The values range from MMWR Weeks 202322 to 202352, which corresponds to May 28th, 2023 to Dec 30th, 2023.
 unique (CA_data$time_int)
+head (CA_data$time_int)
+tail (CA_data$time_int)
+
+# Convert to data frame format: Year and Week Number
+mmwr_weeks <- c("202322", "202352")
+mmwr_data <- data.frame(
+  year = as.numeric(substr(mmwr_weeks, 1, 4)),
+  week = as.numeric(substr(mmwr_weeks, 5, 6))
+)
+# Use MMWRweek package to convert to date
+dates <- MMWRweek2Date(mmwr_data$year, mmwr_data$week)
+dates
 
 #cumulative_infected - the mean number of infected is 584.7 individuals, median is 15 and range is 0 to 80173.  The cumulative totals are for each county categorized by age, sex and race.
 mean (CA_data$cumulative_infected)
@@ -83,28 +101,25 @@ median (CA_data$cumulative_severe)
 range (CA_data$cumulative_severe)
 ```
 
-# Describe cleaning that each data source may need
+## Describe cleaning that each data source may need
 
 As stated above, race_ethnicity will need to be changed from numeric to character description and the date will need to be changed from epi week to date format.
 
-In order to join this data with the LA county dataset, the cumulative unrecovered should be converted to cumulative recovered. Otherwise, the LA county dataset can be joined to this CA county dateset. The column names may need to be changed so that they match exactly, but both datasets have age, sex, race, date, cumulative infected and cumulative severe data.
+The LA county dataset can be joined to this CA county dataset. The column names may need to be changed so that they match exactly, but both datasets have age, sex, race, date, cumulative infected, cumulative unrecovered and cumulative severe data.
 
-The CA population dataset has information about county, age, sex, race and population size. This should allow us to see the proportion of cases in each county by those categories to determine if certain races or counties are more disproportionately affected. This will require some data cleaning and adding of columns to determine % affected by total population for each category.
+The CA population dataset has information about county, age, sex, race and population size. However, the age ranges in this dataset are different and will need to be combined to match the 4 categories in datasets 1 & 2. This should allow us to see the proportion of cases in each county by those categories to determine if certain races or counties are more disproportionately affected. This will require some data cleaning and adding of columns to determine % affected by total population for each category.
 
 Depending on how we decided to interpret the data, there may need to be some cleaning to combine county numbers for all sexes or for all races or for all age groups, depending on how we want to present the data. We might want to create graphs for each of the above demographic factors. We also may need to do some data cleaning to combine all cases for each county to compare % cases by geographic area.
-
-Determining date frame of imported data according to excel file
 
 # Data set two
 
 ## Description of dataset two
 
-This data set contains morbidity and population data by similar demographic and geographic categories for Los Angeles county to include sex, race&ethnicity and age category. Morbidity data includes newly diagnosed cases of the respiratory infection, infected cumulative cases, new unrecovered cases, cumulative unrecovered cases, new severe cases and cumulative severe cases. **Relation:** This data set will be combined with data set 1 containing data from other counties in California, and data set 3 containing population information on counties in California.
+This data set contains morbidity and population data by similar demographic and geographic categories for Los Angeles county to include sex, race&ethnicity and age category. Morbidity data includes newly diagnosed cases of the respiratory infection, infected cumulative cases, new unrecovered cases, cumulative unrecovered cases, new severe cases and cumulative severe cases. Diagnosis dates run from 29th May, 2023 to 25th Dec, 2023. **Relation:** This data set will be combined with data set 1 containing data from other counties in California, and data set 3 containing population information on counties in California.
 
 ```{r}
 
 #Dataset two (sim_novelid_LACounty.csv)
- 
 
 library(tidyverse)
 library(snakecase)
@@ -138,17 +153,18 @@ head(LACounty_data$dt_dx)
 LACounty_data
 ```
 
-# Identify data types for 5+ data elements
+## Identify data types for 5+ data elements
 
 ```{r}
 
 str(LACounty_data)
 
 LACounty_data %>% summarize_all(~ sum(. == ""))  #We have NA values under the entire DT_REPORT column 
+```
 
+##Data type for each column, to be cleaned into snake case. For our scenario we will need the date (DT_DX), sex, race_eth, dx_new cases, infected cumulative and severe cumulative to match with the data provided in the California counties dataset #1.
 
-#Data type for each column, to be cleaned into snake case
-
+```{r}
 #DT_DX = character data
 #AGE_CATEGORY = character data which is fine since we're dealing with ranges
 #SEX = character data
@@ -160,12 +176,13 @@ LACounty_data %>% summarize_all(~ sum(. == ""))  #We have NA values under the en
 #UNRECOVERED_CUMULATIVE = integer
 #SEVERE_NEW = integer
 #SEVERE_CUMULATIVE = integer
+```
 
+## Provide a basic explanation of 5+ data elements
 
-#Provide a basic explanation of 5+ data elements
+```{r}
 
 #Data shows 1736 observations/rows and 11 variables/columns
-
 
 #DT_DX - Date of reported cases runs from 29-May-2023 to 25-Dec-2023, about 8 months reported with 56 observations under each month
 unique(LACounty_data$dt_dx)
@@ -230,99 +247,83 @@ range (LACounty_data$severe_cumulative)
 
 ```
 
-# Describe cleaning that each data source may need (Data set two)
+## Describe cleaning that each data source may need (Data set two)
 
-We shall change the date format into "YYYY-MM-DD". The column names will be converted into snake case, a standard convention for data analysis. To merge data set two with data set 1, we shall add a column to show the county as Los Angeles. The data contains some missing values represented as NA, we could leave this as is. The rest of the data from running the str () function looks okay, integers are well represented. Age category is treated as character data which is okay since we are dealing with ranges and not specific age.
+We shall change the date format into "YYYY-MM-DD". The column names will be converted into snake case, a standard convention for data analysis. To merge data set two with data set 1, we shall add a column to show the county as Los Angeles. The data contains some missing values represented as NA, we could leave this as is. The rest of the data from running the str () function looks okay, integers are well represented. Age category is treated as character data which is okay since we are dealing with ranges and not specific age. Categories that will be merged will need to ensure that they have the same column names
 
-```{r}
-#install.packages("MMWRweek")
-library(MMWRweek)# Create MMWR week strings
-
-
-mmwr_weeks <- c("202240", "202323")
-
-# Convert to data frame format: Year and Week Number
-mmwr_data <- data.frame(
-  year = as.numeric(substr(mmwr_weeks, 1, 4)),
-  week = as.numeric(substr(mmwr_weeks, 5, 6))
-)
-
-# Use MMWRweek package to convert to date
-dates <- MMWRweek2Date(mmwr_data$year, mmwr_data$week)
-
-
-##CA Demographic and County Dataset (ca_pop_2023.csv)
+# CA Demographic and County Dataset (ca_pop_2023.csv)
 
 Description: County-level demographic data which includes health officer region, age category, sex, and race during the year 2023.
 
-Relation: This dataset will help highlight outbreak impact broken down by county and demographic information.
+Relation: This dataset will help highlight outbreak impact broken down by county and demographic information. This will allow us to combine with the case reports for each county to determine the percent affected by race, age and sex for each strata and compared to the total population of each county.
 
-{r}
+```{r}
 #import from GitHub
 
 library(dplyr)
 
 DS3 <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/ca_pop_2023.csv")
 
-#check column titles (all in snake case)
+#check column titles (all in snake case) 
 head(DS3)
 
-#clean race variable title
-DS3 <- DS3 %>% rename(race = "race7")
+#clean race variable title 
+DS3 <- DS3 %\>% rename(race = "race7")
 
-#check summary and class of data
+#check summary and class of data 
 summary(DS3)
 
-#check for NA values (none)
-colSums(is.na(DS3))
+#check for NA values (none) 
+sum(is.na(DS3))
 
-#check for empty strings or blank spaces (none)
+#check for empty strings or blank spaces (none) 
 DS3 %>% summarize_all(~ sum(. == ""))
 
+```
 
-#Identify data types for 5+ data elements/columns/variables
+## Identify data types for 5+ data elements/columns/variables
 
-We will need to look at county, health officer region, age, sex, and race data for our analysis.
+We will need to look at county, age, sex, race and population data for our analysis. The other datasets don't include health officer region.
 
-{r}
+## Data type of each column
 
-#Data type of each column
-
+```{r}
 str(DS3)
 
-#county = character
+#county = character 
 #health_officer_region = character
-#age_cat = character; might want to change to integer
-#sex = character
+#age_cat = character; fine as we are dealing with ranges
+#sex = character 
 #race = character
+#pop = integer; this is okay as it should be a whole number
 
-#Provide a basic description of 5+ data elements
+```
 
-{r}
-#county - There are 58 different counties with 1554 rows of data each.
-unique(DS3$county)
+## Provide a basic description of 5+ data elements
+
+```{r}
+
+#county - There are 58 different counties with 1554 rows of data each. unique(DS3$county)
 table(DS3$county)
 
-#health_officer_region - There are 6 different health officer regions with between 15,540 and 20,202 rows per health officer region.
-unique(DS3$health_officer_region)
+#health_officer_region - There are 6 different health officer regions with between 15,540 and 20,202 rows per health officer region. unique(DS3$health_officer_region)
 table(DS3$health_officer_region)
 
-#age_cat - There are 6 different age categories: 0-4 (4060 rows), 5-11 (5684 rows), 12-17 (4872 rows), 18-49 (25984 rows), 50-65 (12180 rows), and 65+ years old (37352 rows).
-unique(DS3$age_cat)
+#age_cat - There are 6 different age categories: 0-4 (4060 rows), 5-11 (5684 rows), 12-17 (4872 rows), 18-49 (25984 rows), 50-65 (12180 rows), and 65+ years old (37352 rows). unique(DS3$age_cat)
 table(DS3$age_cat)
 
-#sex - The two sex categories are male and female with 45066 rows for each.
-unique(DS3$sex)
+#sex - The two sex categories are male and female with 45066 rows for each. unique(DS3$sex)
 table(DS3$sex)
 
-#race - There are 7 race categories with 12876 rows in each.
+#race - There are 7 race categories with 12876 rows in each. 
 unique(DS3$race)
 table(DS3$race)
 
-#Cleaning that may be needed
-
-The data is fairly clean but I would like to ascertain the meaning of the "pop" variable to determine if it is necessary. The race categories may need to be spelled out in order to align with data from the other data sets and to make them more comprehensible.
-
-# Print the dates
-print(dates)
+#population - Population for the categories ranges from 0 to 45,227 with the median being 15 and mean 433.9
+summary (DS3$pop)
+range (DS3$pop)
 ```
+
+## Cleaning that may be needed
+
+The data is fairly clean but I would like to ascertain further the meaning of the "pop" variable to determine if it is necessary. The race categories may need to be spelled out or renamed in order to align with data from the other data sets and to make them more comprehensible. The age categories 0-4, 5-11 and 12-17 will need to be combined to match the 0-17 category in the other datasets.
