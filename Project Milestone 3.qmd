@@ -55,9 +55,9 @@ pop_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdat
 
 ## Morbidity Datasets
 
-### Recode Column Names
+### 1) Recode Column Names
 
-####Columns to Merge - CA_data vs LACounty_data (Remove all others)
+#### Columns to Merge - CA_data vs LACounty_data (Remove all others)
 
 county –\> Need to add county column to LA
 
@@ -65,8 +65,7 @@ age_cat -\> LA rename to age_cat
 
 sex -\> sex (same)
 
-race_ethnicity -\> CA rename to race_eth
-  ---Recode CA data to match ethnicity of LA County data
+race_ethnicity -\> CA rename to race_eth ---Recode CA data to match ethnicity of LA County data
 
 date -\> create new column for both datasets in date format (time_int for CA - dt_dx for LA)
 
@@ -90,6 +89,7 @@ str (CA_data)
 str(LACounty_data)
 unique (LACounty_data$race_eth)
 ```
+
 ```{r}
 #Rename columns to new column names, add date column in date format
 CA_data_clean <-  CA_data %>%
@@ -108,9 +108,25 @@ CA_data_clean <-  CA_data %>%
   select (-dt_diagnosis, -year, -mmwr_week)
 
 #Recode race_eth column to convert numbers to descriptions same as LACounty data
-CA_data_clean <- CA_data %>%
-  
-
+CA_data_clean <- CA_data_clean %>%
+  mutate(
+    race_eth = recode(
+      race_eth,
+      `1` = "White, Non-Hispanic",
+      `2` = "Black, Non-Hispanic",
+      `3` = "American Indian or Alaska Native, Non-Hispanic",
+      `4` = "Asian, Non-Hispanic",
+      `5` = "Native Hawaiian or Pacific Islander, Non-Hispanic",
+      `6` = "Multiracial (two or more of above races), Non-Hispanic",
+      `7` = "Hispanic (any race)",
+      `9` = "Unknown"
+    )
+  )
 head(CA_data_clean)
 str(CA_data_clean)
+unique(CA_data_clean$race_eth)
 ```
+
+### 2) Join Morbidity Datasets
+
+## Population Dataset
