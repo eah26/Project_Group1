@@ -1,0 +1,116 @@
+---
+title: "Project Milestone 3"
+format: pdf
+editor: visual
+---
+
+## Group 1- Project Milestone #3
+
+#### **For Scenario 1: Infectious disease outbreak (simulated) in California**
+
+The sim_novelid_CA.csv file and sim_novelid_LACounty.csv file together represent simulated morbidity for the entire state of California. While it’s certainly possible for data from different sources to adhere to a format standard, one of the challenges of working with secondary data is that it often does not work out that way. Therefore to prepare each dataset (milestone #3) so that they can be combined into one, whole state, dataset you will need to do the following:
+
+-   Morbidity datasets (from CA and LA County)
+
+    -   Recode column names, values, or formats that are in discordant (dates, etc)
+
+    -   Combine morbidity datasets into a single dataset
+
+    -   Select demographic and geographic strata (s) of interest
+
+    -   Aggregate the data into a new dataframe to  include only one row per strata of interest
+
+-   Population dataset
+
+    -   Recode values to be consistent with morbidity datasets so they can be joined
+
+    -   Select demographic or geogrphic strata(s) of interest
+
+    -   Create a rate metric and summarize to include only one row per strata of interestQuarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Import Datasets
+
+```{r}
+library (dplyr)
+library (tidyverse)
+library (snakecase)
+#install.packages ("MMWRweek")
+library(MMWRweek)# Create MMWR week strings
+```
+
+```{r}
+#import DataSet#1 from GitHub (sim_novelid_CA.csv)
+CA_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_CA.csv") %>%
+  rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE))) 
+
+#Dataset two (sim_novelid_LACounty.csv)
+
+LACounty_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_LACounty.csv") %>%
+  rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE))) 
+
+#Import Dataset three (population dataset)
+pop_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/ca_pop_2023.csv") %>%
+  rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE))) 
+```
+
+## Morbidity Datasets
+
+### Recode Column Names
+
+####Columns to Merge - CA_data vs LACounty_data (Remove all others)
+
+county –\> Need to add county column to LA
+
+age_cat -\> LA rename to age_cat
+
+sex -\> sex (same)
+
+race_ethnicity -\> CA rename to race_eth
+  ---Recode CA data to match ethnicity of LA County data
+
+date -\> create new column for both datasets in date format (time_int for CA - dt_dx for LA)
+
+infected_new -\> rename for both (new_infections for CA-- dx_new for LA)
+
+infected_cum -\> rename for both
+
+unrecovered_new -\> rename for CA only
+
+unrecovered_cum -\> rename for both
+
+severe_new -\> rename for CA only
+
+severe_cum -\> rename for both
+
+```{r}
+str (CA_data)
+```
+
+```{r}
+str(LACounty_data)
+unique (LACounty_data$race_eth)
+```
+```{r}
+#Rename columns to new column names, add date column in date format
+CA_data_clean <-  CA_data %>%
+  rename (race_eth = race_ethnicity) %>%
+  rename (infections_new = new_infections) %>%
+  rename (infected_cum = cumulative_infected) %>%
+  rename (unrecovered_new = new_unrecovered)%>%
+  rename (unrecovered_cum = cumulative_unrecovered) %>%
+  rename (severe_new = new_severe) %>%
+  rename (severe_cum = cumulative_severe) %>%
+   mutate(
+    year = as.numeric(substr(time_int, 1, 4)),  # Extract the year
+    mmwr_week = as.numeric(substr(time_int, 5, 6)),  # Extract the week
+    date = MMWRweek2Date(MMWRyear = year, MMWRweek = mmwr_week)  # Convert to date
+  ) %>%
+  select (-dt_diagnosis, -year, -mmwr_week)
+
+#Recode race_eth column to convert numbers to descriptions same as LACounty data
+CA_data_clean <- CA_data %>%
+  
+
+head(CA_data_clean)
+str(CA_data_clean)
+```
