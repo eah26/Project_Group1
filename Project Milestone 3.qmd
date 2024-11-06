@@ -130,3 +130,37 @@ unique(CA_data_clean$race_eth)
 ### 2) Join Morbidity Datasets
 
 ## Population Dataset
+
+#read in dataset 3
+
+DS3 <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/ca_pop_2023.csv")
+
+#rename racial ethnic groups
+
+DS3 <- DS3 %>%  mutate(
+    race7 = recode(
+      race7,
+      `WhiteTE NH` = "White, Non-Hispanic",
+      `Black NH` = "Black, Non-Hispanic",
+      `AIAN NH` = "American Indian or Alaska Native, Non-Hispanic",
+      `Asian NH` = "Asian, Non-Hispanic",
+      `NHPI NH` = "Native Hawaiian or Pacific Islander, Non-Hispanic",
+      `MR NH` = "Multiracial (two or more of above races), Non-Hispanic",
+      `Hispanic` = "Hispanic (any race)"
+    )) 
+
+DS3 <- rename(DS3, race_eth = race7)
+
+#recategorize ages
+
+DS3 <- DS3 %>% mutate(
+  age_cat = recode(age_cat,
+                   "0-4" = "0-17",
+                   "5-11" = "0-17",
+                   "12-17" = "0-17"))
+
+DS3 <- rename(DS3, age_category = age_cat)
+
+DS3_LA <- filter(DS3, county == "Los Angeles")
+
+DS3_LA <- select(DS3_LA, -county, -health_officer_region)
