@@ -18,7 +18,7 @@ The sim_novelid_CA.csv file and sim_novelid_LACounty.csv file together represent
 
     -   Select demographic and geographic strata (s) of interest
 
-    -   Aggregate the data into a new dataframe to  include only one row per strata of interest
+    -   Aggregate the data into a new dataframe to include only one row per strata of interest
 
 -   Population dataset
 
@@ -28,15 +28,31 @@ The sim_novelid_CA.csv file and sim_novelid_LACounty.csv file together represent
 
     -   Create a rate metric and summarize to include only one row per strata of interestQuarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
-## Import Datasets
+    For all scenarios, please turn in an html document created from an Rmd or Qmd with the following components:
+
+-   Subset rows or columns, as needed
+
+-   Create new variables needed for analysis (minimum 2) New variables should be created based on existing columns; for example Calculating a rate Combining character strings Aggregation
+
+-   Clean variables needed for analysis (minimum 2) Examples Recode invalid values Handle missing data Recode categories
+
+-   Data re-structured as needed (aggregated/summarized and/or pivoted)
+
+-   Data dictionary based on clean dataset (minimum 4 data elements), including: Variable name Data type Description
+
+-   One or more tables with descriptive statistics for 4 data elements
+
+-   Html output that is professionally prepared for presentation Only the necessary information is outputted (you should suppress, for example, entire data frame outputs) Use of headers and sub headers to create an organized document
 
 ```{r}
 library (dplyr)
 library (tidyverse)
 library (snakecase)
-#install.packages ("MMWRweek")
+install.packages ("MMWRweek")
 library(MMWRweek)# Create MMWR week strings
 ```
+
+## Import Datasets
 
 ```{r}
 #import DataSet#1 from GitHub (sim_novelid_CA.csv)
@@ -49,7 +65,7 @@ LACounty_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_proje
   rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE))) 
 
 #Import Dataset three (population dataset)
-pop_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/ca_pop_2023.csv") %>%
+DS3 <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/ca_pop_2023.csv") %>%
   rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE))) 
 ```
 
@@ -107,6 +123,10 @@ CA_data_clean <-  CA_data %>%
   ) %>%
   select (-dt_diagnosis, -year, -mmwr_week)
 
+#Remove word "county" in the county column
+CA_data_clean <- CA_data_clean %>%
+  mutate(county = gsub("\\County\\b", "", county))
+
 #Recode race_eth column to convert numbers to descriptions same as LACounty data
 CA_data_clean <- CA_data_clean %>%
   mutate(
@@ -131,36 +151,21 @@ unique(CA_data_clean$race_eth)
 
 ## Population Dataset
 
-#read in dataset 3
+### Rename racial ethnic groups
 
-DS3 <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/ca_pop_2023.csv")
+```{r}
+DS3 <- DS3 %>% mutate(race7 = recode(race7, `WhiteTE NH` = "White, Non-Hispanic", `Black NH` = "Black, Non-Hispanic", `AIAN NH` = "American Indian or Alaska Native, Non-Hispanic", `Asian NH` = "Asian, Non-Hispanic", `NHPI NH` = "Native Hawaiian or Pacific Islander, Non-Hispanic", `MR NH` = "Multiracial (two or more of above races), Non-Hispanic", `Hispanic` = "Hispanic (any race)" ))
 
-#rename racial ethnic groups
-
-DS3 <- DS3 %>%  mutate(
-    race7 = recode(
-      race7,
-      `WhiteTE NH` = "White, Non-Hispanic",
-      `Black NH` = "Black, Non-Hispanic",
-      `AIAN NH` = "American Indian or Alaska Native, Non-Hispanic",
-      `Asian NH` = "Asian, Non-Hispanic",
-      `NHPI NH` = "Native Hawaiian or Pacific Islander, Non-Hispanic",
-      `MR NH` = "Multiracial (two or more of above races), Non-Hispanic",
-      `Hispanic` = "Hispanic (any race)"
-    )) 
-
+#rename race column to match
 DS3 <- rename(DS3, race_eth = race7)
+```
 
-#recategorize ages
+### Recategorize ages
 
-DS3 <- DS3 %>% mutate(
-  age_cat = recode(age_cat,
-                   "0-4" = "0-17",
-                   "5-11" = "0-17",
-                   "12-17" = "0-17"))
+```{r}
+DS3 <- DS3 %>% mutate(age_cat = recode(age_cat, "0-4" = "0-17", "5-11" = "0-17", "12-17" = "0-17"))
 
-DS3 <- rename(DS3, age_category = age_cat)
-
-DS3_LA <- filter(DS3, county == "Los Angeles")
-
-DS3_LA <- select(DS3_LA, -county, -health_officer_region)
+#Remove unused columns
+DS3_c <- DS3 %>%
+  select(-health_officer_region)
+```
