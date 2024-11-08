@@ -147,6 +147,26 @@ str(CA_data_clean)
 unique(CA_data_clean$race_eth)
 ```
 
+```{r}
+
+#Dataset 2 for LA County
+
+LA_data_clean <- LACounty_data %>%
+  mutate(county = "Los Angeles") %>%
+  rename(age_cat = age_category,
+         date =  dt_dx,
+         infections_new = dx_new,
+         infected_cum = infected_cumulative,
+         unrecovered_cum = unrecovered_cumulative,
+         severe_cum = severe_cumulative) %>%
+  mutate(date = as.Date(date, format = "%d%b%Y")) %>%
+  select(county, age_cat, sex, race_eth, infections_new, infected_cum, 
+         unrecovered_new, unrecovered_cum, severe_new, severe_cum, date, dt_report)
+
+head(LA_data_clean)
+str(LA_data_clean)
+```
+
 ### 2) Join Morbidity Datasets
 
 ## Population Dataset
