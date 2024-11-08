@@ -148,8 +148,7 @@ unique(CA_data_clean$race_eth)
 ```
 
 ```{r}
-
-#Dataset 2 for LA County
+#LA Dataset cleaned
 
 LA_data_clean <- LACounty_data %>%
   mutate(county = "Los Angeles") %>%
