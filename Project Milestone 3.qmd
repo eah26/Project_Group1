@@ -150,15 +150,25 @@ unique(CA_data_clean$race_eth)
 ```{r}
 #LA Dataset cleaned
 
+#Column for LA County added
+
 LA_data_clean <- LACounty_data %>%
-  mutate(county = "Los Angeles") %>%
-  rename(age_cat = age_category,
+  mutate(county = "Los Angeles")
+
+#Column names renamed to match CA_data_clean
+
+LA_data_clean <- LA_data_clean %>%
+  rename(age_cat = age_category,      
          date =  dt_dx,
          infections_new = dx_new,
          infected_cum = infected_cumulative,
          unrecovered_cum = unrecovered_cumulative,
-         severe_cum = severe_cumulative) %>%
-  mutate(date = as.Date(date, format = "%d%b%Y")) %>%
+         severe_cum = severe_cumulative)
+
+#Date turned into Standard format & columns re-ordered to start with county
+
+LA_data_clean <- LA_data_clean %>%
+  mutate(date = as.Date(date, format = "%d%b%Y")) %>% 
   select(county, age_cat, sex, race_eth, infections_new, infected_cum, 
          unrecovered_new, unrecovered_cum, severe_new, severe_cum, date, dt_report)
 
