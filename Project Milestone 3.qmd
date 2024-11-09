@@ -8,25 +8,13 @@ editor: visual
 
 #### **For Scenario 1: Infectious disease outbreak (simulated) in California**
 
-The sim_novelid_CA.csv file and sim_novelid_LACounty.csv file together represent simulated morbidity for the entire state of California. While it’s certainly possible for data from different sources to adhere to a format standard, one of the challenges of working with secondary data is that it often does not work out that way. Therefore to prepare each dataset (milestone #3) so that they can be combined into one, whole state, dataset you will need to do the following:
+-   Select demographic and geographic strata (s) of interest
 
--   Morbidity datasets (from CA and LA County)
-
-    -   Recode column names, values, or formats that are in discordant (dates, etc)
-
-    -   Combine morbidity datasets into a single dataset
-
-    -   Select demographic and geographic strata (s) of interest
-
-    -   Aggregate the data into a new dataframe to include only one row per strata of interest
+-   Aggregate the data into a new dataframe to include only one row per strata of interest
 
 -   Population dataset
 
-    -   Recode values to be consistent with morbidity datasets so they can be joined
-
-    -   Select demographic or geogrphic strata(s) of interest
-
-    -   Create a rate metric and summarize to include only one row per strata of interestQuarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+    -   Create a rate metric and summarize to include only one row per strata of interest
 
     For all scenarios, please turn in an html document created from an Rmd or Qmd with the following components:
 
@@ -73,30 +61,6 @@ DS3 <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/ref
 
 ### 1) Recode Column Names
 
-#### Columns to Merge - CA_data vs LACounty_data (Remove all others)
-
-county –\> Need to add county column to LA
-
-age_cat -\> LA rename to age_cat
-
-sex -\> sex (same)
-
-race_ethnicity -\> CA rename to race_eth ---Recode CA data to match ethnicity of LA County data
-
-date -\> create new column for both datasets in date format (time_int for CA - dt_dx for LA)
-
-infected_new -\> rename for both (new_infections for CA-- dx_new for LA)
-
-infected_cum -\> rename for both
-
-unrecovered_new -\> rename for CA only
-
-unrecovered_cum -\> rename for both
-
-severe_new -\> rename for CA only
-
-severe_cum -\> rename for both
-
 ```{r}
 str (CA_data)
 ```
@@ -121,7 +85,7 @@ CA_data_clean <-  CA_data %>%
     mmwr_week = as.numeric(substr(time_int, 5, 6)),  # Extract the week
     date = MMWRweek2Date(MMWRyear = year, MMWRweek = mmwr_week)  # Convert to date
   ) %>%
-  select (-dt_diagnosis, -year, -mmwr_week)
+  select (-dt_diagnosis, -year, -mmwr_week, -time_int)
 
 #Remove word "county" in the county column
 CA_data_clean <- CA_data_clean %>%
@@ -160,13 +124,34 @@ LA_data_clean <- LACounty_data %>%
          severe_cum = severe_cumulative) %>%
   mutate(date = as.Date(date, format = "%d%b%Y")) %>%
   select(county, age_cat, sex, race_eth, infections_new, infected_cum, 
-         unrecovered_new, unrecovered_cum, severe_new, severe_cum, date, dt_report)
+         unrecovered_new, unrecovered_cum, severe_new, severe_cum, date)
 
 head(LA_data_clean)
 str(LA_data_clean)
 ```
 
-### 2) Join Morbidity Datasets
+### 2) Join Morbidity Datasets & Aggregate by Race
+
+```{r}
+#Join CA_data_clean with LA_data_clean
+
+Counties_join <- full_join (CA_data_clean, LA_data_clean) %>%
+  arrange (county)
+
+#Aggregate by Race/Ethnicity
+Counties_race <- Counties_join %>%
+  group_by(county, race_eth) %>%
+  summarize (total_infections_new = sum(infections_new),
+             total_infections_cum = sum (infected_cum),
+             total_unrecovered_new = sum (unrecovered_new),
+             total_unrecovered_cum = sum (unrecovered_cum),
+             total_severe_new = sum (severe_new),
+             total_severe_cum = sum (severe_cum)) %>%
+  ungroup()
+
+head (Counties_race)
+
+```
 
 ## Population Dataset
 
@@ -185,6 +170,6 @@ DS3 <- rename(DS3, race_eth = race7)
 DS3 <- DS3 %>% mutate(age_cat = recode(age_cat, "0-4" = "0-17", "5-11" = "0-17", "12-17" = "0-17"))
 
 #Remove unused columns
-DS3_c <- DS3 %>%
+DS3_clean <- DS3 %>%
   select(-health_officer_region)
 ```
