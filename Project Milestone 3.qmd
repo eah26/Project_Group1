@@ -186,3 +186,7 @@ str(DS3_clean)
 ```
 
 ### 3) Aggregate by Race/Ethnicity
+
+  aggregate_table <- DS3_clean %>% 
+  group_by(race_eth) %>% 
+  summarize(aggregate = sum(pop)
