@@ -1,0 +1,281 @@
+---
+title: "Project Milestone 4"
+author: "Group 1"
+format: html
+editor: visual
+---
+
+## Group 1- Project Milestone #4
+
+#### **For Scenario 1: Infectious disease outbreak (simulated) in California**
+
+```{r, include = F}
+library (dplyr) 
+library (tidyverse) 
+library (tidyr)
+library (snakecase) 
+install.packages ("MMWRweek")
+library(MMWRweek)# Create MMWR week strings 
+library (kableExtra)
+library (ggplot2)
+```
+
+## Data Dictionary
+
+```{r, echo = FALSE}
+#Create Data Dictionary with Variable Name, Data Type, Description 
+Dictionary <- data.frame(   
+  Variable_Name = c("county", "race_eth", "total_infections", "total_unrecovered", "total_severe", "pop"),   
+        Data_Type = c("Character", "Character", "Integer", "Integer", "Integer", "Integer"),   
+      Description = c(     "California county of residence of novel infectious respiratory ID cases",     "Race-Ethnicity categorization as defined by California Department of Finance",     "Cumulative number of diagnosed individuals from May 28th-Dec 30th, 2023, per race category",     "Cumulative number of individuals reported as unrecovered after a week of being diagnosed from May 28th-Dec 30th, 2023, per race category",     "Cumulative number of identified individuals having severe disease requiring hospitalization from May 28th-Dec 30th, 2023, per race category",     "Population of each California county, per race category"   ) )
+
+#Create a table using KableExtra 
+Dictionary %>%   
+  kable("html", col.names = c("Variable Name", "Data Type", "Description")) %>%   
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"))  %>%   add_header_above(c("Data Dictionary" = 3))
+```
+
+## Import Datasets
+
+```{r import_data, include = FALSE}
+#import DataSet#1 from GitHub (sim_novelid_CA.csv)
+CA_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_CA.csv") %>%  
+  rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE)))  
+
+#Dataset two (sim_novelid_LACounty.csv)
+LACounty_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_LACounty.csv") %>%   
+  rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE))) 
+
+#Import Dataset three (population dataset)
+DS3 <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/ca_pop_2023.csv") %>%   rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE)))
+```
+
+## Morbidity Datasets
+
+### 1) Recode Column Names
+
+```{r renameCA_data, include = FALSE}
+#Rename columns to new column names, add date column in date format 
+CA_data_clean <-  CA_data %>%   
+  rename (race_eth = race_ethnicity) %>%   
+  rename (infections_new = new_infections) %>%  
+  rename (infected_cum = cumulative_infected) %>%   
+  rename (unrecovered_new = new_unrecovered)%>%   
+  rename (unrecovered_cum = cumulative_unrecovered) %>%  
+  rename (severe_new = new_severe) %>%   
+  rename (severe_cum = cumulative_severe) %>%   
+  mutate(     year = as.numeric(substr(time_int, 1, 4)),  # Extract the year   
+mmwr_week = as.numeric(substr(time_int, 5, 6)),  # Extract the week    
+date = MMWRweek2Date(MMWRyear = year, MMWRweek = mmwr_week)  # Convert to date  
+) %>%   
+  select (-dt_diagnosis, -year, -mmwr_week, -time_int)  #Remove word "county" in the county column
+
+CA_data_clean <- CA_data_clean %>%   mutate(county = gsub("\\County\\b", "", county)) 
+
+#Recode race_eth column to convert numbers to descriptions same as LACounty data 
+CA_data_clean <- CA_data_clean %>%   
+  mutate(     race_eth = recode(race_eth, `1` = "White, Non-Hispanic",`2` = "Black, Non-Hispanic", `3` = "American Indian or Alaska Native, Non-Hispanic",`4` = "Asian, Non-Hispanic",`5` = "Native Hawaiian or Pacific Islander, Non-Hispanic",`6` = "Multiracial (two or more of above races), Non-Hispanic",`7` = "Hispanic (any race)",       `9` = "Unknown")   
+              ) 
+
+#head(CA_data_clean)
+str(CA_data_clean) 
+#unique(CA_data_clean$race_eth)}
+```
+
+```{r cleanLA_data, include = FALSE}
+#LA Dataset cleaned  
+LA_data_clean <- LACounty_data %>%   
+  mutate(county = "Los Angeles") %>%  
+  rename(age_cat = age_category, date =  dt_dx, infections_new = dx_new, infected_cum = infected_cumulative,          unrecovered_cum = unrecovered_cumulative,severe_cum = severe_cumulative) %>%  
+  mutate(date = as.Date(date, format = "%d%b%Y")) %>%   
+  select(county, age_cat, sex, race_eth, infections_new, infected_cum,unrecovered_new, unrecovered_cum, severe_new, severe_cum, date)  
+
+#head(LA_data_clean) 
+str(LA_data_clean)
+```
+
+### 2) Join Morbidity Datasets & Aggregate by Race
+
+```{r join_morbidity, include = FALSE, warning= FALSE, message = FALSE}
+#Join CA_data_clean with LA_data_clean 
+Counties_join <- full_join (CA_data_clean, LA_data_clean) %>%   
+  arrange (county) 
+
+#Aggregate by Race/Ethnicity 
+Counties_race <- Counties_join %>%   
+  group_by(county, race_eth) %>%   
+  summarize (total_infections = sum(infections_new),total_unrecovered = sum (unrecovered_new),              total_severe = sum (severe_new)) %>%   
+  ungroup()  
+
+head(Counties_race)
+```
+
+## Population Dataset
+
+### 1) Rename racial ethnic groups
+
+```{r cleanpop_data, include = FALSE}
+DS3 <- DS3 %>% mutate(race7 = recode(race7, `WhiteTE NH` = "White, Non-Hispanic", `Black NH` = "Black, Non-Hispanic", `AIAN NH` = "American Indian or Alaska Native, Non-Hispanic", `Asian NH` = "Asian, Non-Hispanic", `NHPI NH` = "Native Hawaiian or Pacific Islander, Non-Hispanic", `MR NH` = "Multiracial (two or more of above races), Non-Hispanic", `Hispanic` = "Hispanic (any race)" )) 
+
+#rename race column to match 
+DS3 <- rename(DS3, race_eth = race7)
+```
+
+### 2) Recategorize ages
+
+```{r popages, r= FALSE}
+DS3 <- DS3 %>% mutate(age_cat = recode(age_cat, "0-4" = "0-17", "5-11" = "0-17", "12-17" = "0-17")) 
+
+#Remove unused columns 
+DS3_clean <- DS3 %>%   select(-health_officer_region)  
+str(DS3_clean)
+```
+
+### 3) Aggregate by Race/Ethnicity
+
+```{r aggregate, include = FALSE,  message = FALSE}
+
+#Aggregate by race for each county  
+pop_aggregate <- DS3_clean %>%   
+  group_by(county, race_eth) %>%    
+  summarize(total_population = sum(pop)) %>%
+  ungroup ()
+```
+
+## Milestone 4 - Join all Datasets and Add Rate Columns
+
+```{r, warning = FALSE, message = FALSE}
+#str(Counties_race)
+#str(pop_aggregate)
+
+#make sure data matches for all datasets
+library(stringr)
+
+Counties_race <- Counties_race %>%
+  mutate(county = str_to_title(str_trim(county)),
+         race_eth = str_to_title(str_trim(race_eth)))
+
+pop_aggregate <- pop_aggregate %>%
+  mutate(county = str_to_title(str_trim(county)),
+         race_eth = str_to_title(str_trim(race_eth)))
+
+
+#join County aggregated by race with population dataset
+Counties_final <- Counties_race %>%
+  inner_join (pop_aggregate, by = c("county", "race_eth")) %>%
+  arrange(county) 
+
+#Add rate (% population columns)
+Counties_final <- Counties_final %>%
+  mutate(
+    total_infections_pct = round((total_infections / total_population) * 100,2),
+    total_unrecovered_pct = round((total_unrecovered / total_population) * 100,2),
+    total_severe_pct = round((total_severe / total_population) * 100,2)
+  )
+
+Counties_final <- Counties_final %>%
+  mutate(across(everything(), ~replace(., is.nan(.), 0))) %>%
+  mutate(race_eth = case_when(
+    race_eth == "American Indian Or Alaska Native, Non-Hispanic" ~ "American Indian or Alaska Native",
+    TRUE ~ race_eth
+  ))
+
+str (Counties_final)
+
+```
+
+## Visualizations
+
+###Graph of Infections by Race
+
+```{r visualizations, message = FALSE, echo = TRUE}
+
+CA_agg_by_race_only <- Counties_final %>%
+  group_by(race_eth) %>%
+  summarize (total_infections = sum(total_infections),
+             total_unrecovered = sum (total_unrecovered),
+             total_severe = sum (total_severe),
+             total_population = sum(total_population))
+
+CA_race <- CA_agg_by_race_only %>% 
+  mutate(
+    total_infections_pct = round((total_infections / total_population) * 100,2),
+    total_unrecovered_pct = round((total_unrecovered / total_population) * 100,2),
+    total_severe_pct = round((total_severe / total_population) * 100,2)
+  )
+
+#Pivot data for side by side bar graph
+data_long_pct <- CA_race %>%
+  pivot_longer(cols = c(total_infections_pct, total_unrecovered_pct, total_severe_pct),
+               names_to = "metric", values_to = "value")
+
+#Bar Graph
+Graph_2 <- ggplot(data_long_pct, aes(x = race_eth, y = value, fill = metric)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Novel Respiratory Disease Infections by Race/Ethnicity",
+    x = "Race Category",
+    y = "Percent of Total Population",
+    fill = "Infection Category",  # Renaming the legend title
+    caption = "Interpretation: Data represents percentages calculated based on total population per race/ethnicity.
+    \n The graph shows the Race Categories most affected are Alaska Native, White, Black and Hispanic
+    \n with Asian and Multiracial least affected.  " # Adding a footnote
+  ) +
+  scale_fill_manual(
+    values = c("total_infections_pct" = "skyblue", 
+               "total_unrecovered_pct" = "orange", 
+               "total_severe_pct" = "red"),
+    labels = c("Total Infections", "Total Unrecovered", "Total Severe")  # Renaming the legend categories
+  ) +
+  scale_x_discrete(labels = function(x) ifelse(nchar(x) > 19, paste(substr(x, 1, 19), "\n", substr(x, 20, nchar(x))), x)) +  
+  # Add line break for long labels
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    axis.text.y = element_text(size = 10),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    plot.caption = element_text(hjust = 0, size = 8)  # Left-align the footnote
+  )
+
+Graph_2
+
+```
+
+## Data Element Statistics
+
+```{r, echo = FALSE}
+# Create statistics for data elements 
+# Count unique counties
+County_stats <- n_distinct(Counties_race$county) 
+
+# Count unique race/ethnicity categories and list unique categories
+Race_stats <- n_distinct(Counties_race$race_eth) 
+Race_cat <- unique(Counties_race$race_eth)
+
+# Infection statistics 
+infection_stats <- Counties_race %>%   summarise(     Mean_Total_Infections = mean(total_infections, na.rm = TRUE),     Max_Total_Infections = max(total_infections, na.rm = TRUE),     Min_Total_Infections = min(total_infections, na.rm = TRUE)   ) %>% as.list()  
+
+# Unrecovered statistics 
+unrecovered_stats <- Counties_race %>%   summarise(     Mean_Total_Unrecovered = mean(total_unrecovered, na.rm = TRUE),     Max_Total_Unrecovered = max(total_unrecovered, na.rm = TRUE),     Min_Total_Unrecovered = min(total_unrecovered, na.rm = TRUE)   ) %>% as.list() 
+
+# Severe statistics 
+severe_stats <- Counties_race %>%   
+  summarise (Mean_Total_Severe = mean(total_severe, na.rm = TRUE),     
+Max_Total_Severe = max(total_severe, na.rm = TRUE),    
+Min_Total_Severe = min(total_severe, na.rm = TRUE)   ) %>% 
+  as.list() 
+
+# Population statistics 
+pop_stats <- pop_aggregate %>%   ungroup() %>%   summarise(Mean_Population = mean(pop_aggregate, na.rm = TRUE),     
+Max_Population = max(pop_aggregate, na.rm = TRUE),     Min_Population = min(pop_aggregate, na.rm = TRUE)   )   
+
+#Create statistics table manually 
+Element_stats <- data.frame(   
+  Variable_Name = c("county", "race/ethnicity", "total infections", "total unrecovered", "total severe", "population"),   Statistics = c("58 counties","7 categories", "Range = 0 to 429,165;  Mean = 11,206",                  "Range = 0 to 43,063;  Mean = 1,384","Range = 0 to 9,482;  Mean = 313", "Range = 0 to 4,089,110;  Mean = 96,328"                ) )  
+
+Element_stats %>%   kable("html", col.names = c("Variable Name", "Statistics")) %>%   
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"))  %>% 
+  add_header_above(c("Summary Statistics" = 2))
+```
