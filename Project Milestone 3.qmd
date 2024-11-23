@@ -1,6 +1,6 @@
 ---
 title: "Project Milestone 3"
-format: pdf
+format: html
 editor: visual
 ---
 
@@ -8,36 +8,40 @@ editor: visual
 
 #### **For Scenario 1: Infectious disease outbreak (simulated) in California**
 
--   Select demographic and geographic strata (s) of interest
-
--   Aggregate the data into a new dataframe to include only one row per strata of interest
-
--   Population dataset
-
-    -   Create a rate metric and summarize to include only one row per strata of interest
-
-    For all scenarios, please turn in an html document created from an Rmd or Qmd with the following components:
-
--   Subset rows or columns, as needed
-
--   Create new variables needed for analysis (minimum 2) New variables should be created based on existing columns; for example Calculating a rate Combining character strings Aggregation
-
--   Clean variables needed for analysis (minimum 2) Examples Recode invalid values Handle missing data Recode categories
-
--   Data re-structured as needed (aggregated/summarized and/or pivoted)
-
--   Data dictionary based on clean dataset (minimum 4 data elements), including: Variable name Data type Description
-
--   One or more tables with descriptive statistics for 4 data elements
-
--   Html output that is professionally prepared for presentation Only the necessary information is outputted (you should suppress, for example, entire data frame outputs) Use of headers and sub headers to create an organized document
-
-```{r}
+```{r, include = F}
 library (dplyr)
 library (tidyverse)
+library (tidyr)
 library (snakecase)
 install.packages ("MMWRweek")
 library(MMWRweek)# Create MMWR week strings
+library (kableExtra)
+```
+
+## Data Dictionary
+
+```{r, echo = FALSE}
+#Create Data Dictionary with Variable Name, Data Type, Description
+
+Dictionary <- data.frame(
+  Variable_Name = c("county", "race_eth", "total_infections", "total_unrecovered", "total_severe", "pop"),
+  Data_Type = c("Character", "Character", "Integer", "Integer", "Integer", "Integer"),
+  Description = c(
+    "California county of residence of novel infectious respiratory ID cases",
+    "Race-Ethnicity categorization as defined by California Department of Finance",
+    "Cumulative number of diagnosed individuals from May 28th-Dec 30th, 2023, per race category",
+    "Cumulative number of individuals reported as unrecovered after a week of being diagnosed from May 28th-Dec 30th, 2023, per race category",
+    "Cumulative number of identified individuals having severe disease requiring hospitalization from May 28th-Dec 30th, 2023, per race category",
+    "Population of each California county, per race category"
+  )
+)
+
+#Create a table using KableExtra
+Dictionary %>%
+  kable("html", col.names = c("Variable Name", "Data Type", "Description")) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"))  %>%
+  add_header_above(c("Data Dictionary" = 3)) 
+
 ```
 
 ## Import Datasets
@@ -48,7 +52,6 @@ CA_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata
   rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE))) 
 
 #Dataset two (sim_novelid_LACounty.csv)
-
 LACounty_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_LACounty.csv") %>%
   rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE))) 
 
@@ -62,11 +65,11 @@ DS3 <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/ref
 ### 1) Recode Column Names
 
 ```{r}
-str (CA_data)
+#str (CA_data)
 ```
 
 ```{r}
-str(LACounty_data)
+#str(LACounty_data)
 unique (LACounty_data$race_eth)
 ```
 
@@ -106,9 +109,9 @@ CA_data_clean <- CA_data_clean %>%
       `9` = "Unknown"
     )
   )
-head(CA_data_clean)
+#head(CA_data_clean)
 str(CA_data_clean)
-unique(CA_data_clean$race_eth)
+#unique(CA_data_clean$race_eth)
 ```
 
 ```{r}
@@ -136,13 +139,13 @@ LA_data_clean <- LA_data_clean %>%
   select(county, age_cat, sex, race_eth, infections_new, infected_cum, 
          unrecovered_new, unrecovered_cum, severe_new, severe_cum, date)
 
-head(LA_data_clean)
+#head(LA_data_clean)
 str(LA_data_clean)
 ```
 
 ### 2) Join Morbidity Datasets & Aggregate by Race
 
-```{r}
+```{r, message = FALSE}
 #Join CA_data_clean with LA_data_clean
 
 Counties_join <- full_join (CA_data_clean, LA_data_clean) %>%
@@ -151,21 +154,18 @@ Counties_join <- full_join (CA_data_clean, LA_data_clean) %>%
 #Aggregate by Race/Ethnicity
 Counties_race <- Counties_join %>%
   group_by(county, race_eth) %>%
-  summarize (total_infections_new = sum(infections_new),
-             total_infections_cum = sum (infected_cum),
-             total_unrecovered_new = sum (unrecovered_new),
-             total_unrecovered_cum = sum (unrecovered_cum),
-             total_severe_new = sum (severe_new),
-             total_severe_cum = sum (severe_cum)) %>%
+  summarize (total_infections = sum(infections_new),
+             total_unrecovered = sum (unrecovered_new),
+             total_severe = sum (severe_new)) %>%
   ungroup()
 
-head (Counties_race)
+head(Counties_race)
 
 ```
 
 ## Population Dataset
 
-### Rename racial ethnic groups
+### 1) Rename racial ethnic groups
 
 ```{r}
 DS3 <- DS3 %>% mutate(race7 = recode(race7, `WhiteTE NH` = "White, Non-Hispanic", `Black NH` = "Black, Non-Hispanic", `AIAN NH` = "American Indian or Alaska Native, Non-Hispanic", `Asian NH` = "Asian, Non-Hispanic", `NHPI NH` = "Native Hawaiian or Pacific Islander, Non-Hispanic", `MR NH` = "Multiracial (two or more of above races), Non-Hispanic", `Hispanic` = "Hispanic (any race)" ))
@@ -174,7 +174,7 @@ DS3 <- DS3 %>% mutate(race7 = recode(race7, `WhiteTE NH` = "White, Non-Hispanic"
 DS3 <- rename(DS3, race_eth = race7)
 ```
 
-### Recategorize ages
+### 2) Recategorize ages
 
 ```{r}
 DS3 <- DS3 %>% mutate(age_cat = recode(age_cat, "0-4" = "0-17", "5-11" = "0-17", "12-17" = "0-17"))
@@ -182,4 +182,80 @@ DS3 <- DS3 %>% mutate(age_cat = recode(age_cat, "0-4" = "0-17", "5-11" = "0-17",
 #Remove unused columns
 DS3_clean <- DS3 %>%
   select(-health_officer_region)
+
+str(DS3_clean)
+```
+
+### 3) Aggregate by Race/Ethnicity
+
+```{r, message = FALSE}
+#Aggregate by race for each county  
+pop_aggregate <- DS3_clean %>% 
+  group_by(county, race_eth) %>% 
+  summarize(population_aggregate = sum(pop))
+            
+```
+
+## Data Element Statistics
+
+```{r, echo = FALSE}
+# Create statistics for data elements
+
+# Count unique counties
+County_stats <- n_distinct(Counties_race$county)
+
+# Count unique race/ethnicity categories and list unique categories
+Race_stats <- n_distinct(Counties_race$race_eth)
+Race_cat <- unique(Counties_race$race_eth)
+
+# Infection statistics
+infection_stats <- Counties_race %>%
+  summarise(
+    Mean_Total_Infections = mean(total_infections, na.rm = TRUE),
+    Max_Total_Infections = max(total_infections, na.rm = TRUE),
+    Min_Total_Infections = min(total_infections, na.rm = TRUE)
+  ) %>% as.list()
+
+# Unrecovered statistics
+unrecovered_stats <- Counties_race %>%
+  summarise(
+    Mean_Total_Unrecovered = mean(total_unrecovered, na.rm = TRUE),
+    Max_Total_Unrecovered = max(total_unrecovered, na.rm = TRUE),
+    Min_Total_Unrecovered = min(total_unrecovered, na.rm = TRUE)
+  ) %>% as.list()
+
+# Severe statistics
+severe_stats <- Counties_race %>%
+  summarise(
+    Mean_Total_Severe = mean(total_severe, na.rm = TRUE),
+    Max_Total_Severe = max(total_severe, na.rm = TRUE),
+    Min_Total_Severe = min(total_severe, na.rm = TRUE)
+  ) %>% as.list()
+
+# Population statistics
+pop_stats <- pop_aggregate %>%
+  ungroup() %>%
+  summarise(
+    Mean_Population = mean(population_aggregate, na.rm = TRUE),
+    Max_Population = max(population_aggregate, na.rm = TRUE),
+    Min_Population = min(population_aggregate, na.rm = TRUE)
+  ) 
+
+
+#Create statistics table manually
+Element_stats <- data.frame(
+  Variable_Name = c("county", "race/ethnicity", "total infections", "total unrecovered", "total severe", "population"),
+  Statistics = c("58 counties",
+                 "7 categories",
+                 "Range = 0 to 429,165;  Mean = 11,206",
+                 "Range = 0 to 43,063;  Mean = 1,384",
+                 "Range = 0 to 9,482;  Mean = 313",
+                 "Range = 0 to 4,089,110;  Mean = 96,328"
+                 )
+)
+
+Element_stats %>%
+  kable("html", col.names = c("Variable Name", "Statistics")) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"))  %>%
+  add_header_above(c("Summary Statistics" = 2)) 
 ```
