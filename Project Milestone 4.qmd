@@ -124,11 +124,8 @@ DS3 <- rename(DS3, race_eth = race7)
 ### 2) Recategorize ages
 
 ```{r popages, r= FALSE}
-DS3 <- DS3 %>% mutate(age_cat = recode(age_cat, "0-4" = "0-17", "5-11" = "0-17", "12-17" = "0-17")) 
+DS3_clean <- DS3 %>% mutate(age_cat = recode(age_cat, "0-4" = "0-17", "5-11" = "0-17", "12-17" = "0-17")) 
 
-#Remove unused columns 
-DS3_clean <- DS3 %>%   select(-health_officer_region)  
-str(DS3_clean)
 ```
 
 ### 3) Aggregate by Race/Ethnicity
