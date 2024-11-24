@@ -240,6 +240,88 @@ Graph_2
 
 ```
 
+###Graph of top ten most affected counties
+
+```{r visualizations, message = FALSE, echo = TRUE}
+
+Counties_county <- Counties_final %>%
+  mutate(
+    total_infections_pct = round((total_infections / total_population) * 100,2),
+    total_unrecovered_pct = round((total_unrecovered / total_population) * 100,2),
+    total_severe_pct = round((total_severe / total_population) * 100,2)
+  )
+
+# Summary data
+
+counties_county_only <- Counties_county %>%
+  group_by(county) %>%
+  summarize(
+    total_infections = sum(total_infections),
+    total_unrecovered = sum(total_unrecovered),
+    total_severe = sum(total_severe),
+    total_population = sum(total_population)
+  )
+
+#Percentage of cases and of top 10 counties
+
+
+CA_county_only <- counties_county_only %>% 
+  mutate(
+    total_infections_pct = round((total_infections / total_population) * 100, 2),
+    total_unrecovered_pct = round((total_unrecovered / total_population) * 100, 2),
+    total_severe_pct = round((total_severe / total_population) * 100, 2)
+  ) %>% 
+  group_by(county) %>% # Ensure that summarization is done by groups if `county` exists.
+  summarize(
+    Total_Unrecovered = sum(total_unrecovered, na.rm = TRUE),
+    Total_Severe = sum(total_severe, na.rm = TRUE),
+    Total_Infections = sum(total_infections, na.rm = TRUE)
+  ) %>%
+  arrange(desc(Total_Infections), desc(Total_Unrecovered), desc(Total_Severe))%>%
+  slice_head(n=10)
+
+# Pivot the data for plotting (do any edits here, dont touch up)
+
+# Pivot the data for plotting
+top_10_counties_pct <- CA_county_only %>%
+  pivot_longer(
+    cols = c(Total_Infections, Total_Unrecovered, Total_Severe),
+    names_to = "metric", values_to = "value"
+  )
+
+# Create the bar plot
+
+ggplot(top_10_counties_pct, aes(x = reorder(county, -value), y = value, fill = metric)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Create side-by-side bars
+  labs(
+    title = "Top Ten Counties Affected",
+    x = "County",                   # Corrected to match the axis
+    y = "Percent of Total Population",
+    fill = "Category",           # Legend title for infection categories
+    caption = "Interpretation: 
+    Graph shows top ten most affected counties with Los Angeles
+    having the highest percentage of infected people, 
+    severe and unrecovered cases."  # Added caption
+  ) +
+  scale_fill_manual(
+    values = c(
+      Total_Infections = "#DAA520", 
+      Total_Unrecovered = "#FA8072", 
+      Total_Severe = "red"
+    ),
+    labels = c("Total Infections", "Total Unrecovered", "Total Severe")  # Renaming the legend categories
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),  # Rotate x-axis labels
+    axis.text.y = element_text(size = 10),  # Adjust y-axis labels
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    axis.title = element_text(size = 12),
+    plot.caption = element_text(size = 10, hjust = 0)  # Style the caption
+  )
+
+```
+
 ## Data Element Statistics
 
 ```{r, echo = FALSE}
