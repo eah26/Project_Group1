@@ -276,3 +276,24 @@ Element_stats %>%   kable("html", col.names = c("Variable Name", "Statistics")) 
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"))  %>% 
   add_header_above(c("Summary Statistics" = 2))
 ```
+Percent Infection and Infection Type by Race
+
+{r}
+
+#percentage stats
+
+CA_race_table <- CA_race %>% mutate(percent_infected = (total_infections/total_population)*100, percent_severe_of_infected = (total_severe/total_infections) * 100, percent_unrecovered_of_infected = (total_unrecovered/total_infections)*100)
+
+#cleaning dataframe
+
+CA_race_table <- select(CA_race_table, -total_infections, -total_unrecovered, -total_severe, -total_population, -total_infections_pct, -total_unrecovered_pct, -total_severe_pct)
+
+#percent infection table by race
+
+race_kable <- kable(CA_race_table,
+      col.names = c('Race/Ethnicity', 'Percent Infected', 'Percent Severe Infection of the Infected', 'Percent Unrecovered of the Infected'), 
+      digits = 1, align = c('l', 'c', 'c', 'c'), 
+      caption = "Infection Percentages by Race/Ethnicity") %>% footnote(general_title = "Interpretation:", general = "The group with the highest percent of infection is American Indian or Alaska Native but the group with the highest percent of severe infection and unrecovered infection is white. Multiracial people have the lowest percent of infection, severe infection, and unrecovered infection.")
+
+```
+
