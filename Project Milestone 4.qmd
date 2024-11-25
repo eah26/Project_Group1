@@ -241,8 +241,7 @@ Graph_2
 
 ```
 
-
-###Graph of top ten most affected counties
+### Graph of top ten most affected counties
 
 ```{r visualizations, message = FALSE, echo = TRUE}
 
@@ -296,19 +295,19 @@ top_10_counties_pct <- CA_county_only %>%
 ggplot(top_10_counties_pct, aes(x = reorder(county, -value), y = value, fill = metric)) +
   geom_bar(stat = "identity", position = "dodge") +  # Create side-by-side bars
   labs(
-    title = "Top Ten Counties Affected",
+    title = "Top Ten Counties Affected by Novel Respiratory Disease",
     x = "County",                   # Corrected to match the axis
     y = "Percent of Total Population",
     fill = "Category",           # Legend title for infection categories
     caption = "Interpretation: 
     Graph shows top ten most affected counties with Los Angeles
     having the highest percentage of infected people, 
-    severe and unrecovered cases."  # Added caption
+    along with severe and unrecovered cases."  # Added caption
   ) +
   scale_fill_manual(
     values = c(
-      Total_Infections = "#DAA520", 
-      Total_Unrecovered = "#FA8072", 
+      Total_Infections = "skyblue", 
+      Total_Unrecovered = "orange", 
       Total_Severe = "red"
     ),
     labels = c("Total Infections", "Total Unrecovered", "Total Severe")  # Renaming the legend categories
