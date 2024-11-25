@@ -243,7 +243,7 @@ Graph_2
 
 ### Graph of top ten most affected counties
 
-```{r visualizations, message = FALSE, echo = TRUE}
+```{r visualizations2, message = FALSE, echo = TRUE}
 
 Counties_county <- Counties_final %>%
   mutate(
