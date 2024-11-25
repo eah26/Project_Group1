@@ -123,7 +123,7 @@ DS3 <- rename(DS3, race_eth = race7)
 
 ### 2) Recategorize ages
 
-```{r popages, r= FALSE}
+```{r popages, include = FALSE}
 DS3_clean <- DS3 %>% mutate(age_cat = recode(age_cat, "0-4" = "0-17", "5-11" = "0-17", "12-17" = "0-17")) 
 
 ```
@@ -171,11 +171,11 @@ Counties_final <- Counties_final %>%
   )
 
 Counties_final <- Counties_final %>%
-  mutate(across(everything(), ~replace(., is.nan(.), 0))) %>%
-  mutate(race_eth = case_when(
-    race_eth == "American Indian Or Alaska Native, Non-Hispanic" ~ "American Indian or Alaska Native",
-    TRUE ~ race_eth
-  ))
+  mutate(across(everything(), ~replace(., is.nan(.), 0)))
+  #mutate(race_eth = case_when(
+   # race_eth == "American Indian Or Alaska Native, Non-Hispanic" ~ "American Indian or Alaska Native",
+    #TRUE ~ race_eth
+#  ))
 
 str (Counties_final)
 
@@ -183,7 +183,7 @@ str (Counties_final)
 
 ## Visualizations
 
-###Graph of Infections by Race
+### Graph of Infections by Race
 
 ```{r visualizations, message = FALSE, echo = TRUE}
 
@@ -214,9 +214,10 @@ Graph_2 <- ggplot(data_long_pct, aes(x = race_eth, y = value, fill = metric)) +
     x = "Race Category",
     y = "Percent of Total Population",
     fill = "Infection Category",  # Renaming the legend title
-    caption = "Interpretation: Data represents percentages calculated based on total population per race/ethnicity.
-    \n The graph shows the Race Categories most affected are Alaska Native, White, Black and Hispanic
-    \n with Asian and Multiracial least affected.  " # Adding a footnote
+    caption = "Interpretation: Data represents percentages of infection categories calculated based on total population
+    \n per race/ethnicity. The graph shows the Race Categories most affected are Alaska Native, White, 
+    \n Black and Hispanic with Asian and Multiracial least affected. The percentage of severe and unaffected
+    \n cases follow the same pattern." # Adding a footnote
   ) +
   scale_fill_manual(
     values = c("total_infections_pct" = "skyblue", 
@@ -233,10 +234,41 @@ Graph_2 <- ggplot(data_long_pct, aes(x = race_eth, y = value, fill = metric)) +
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
     plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-    plot.caption = element_text(hjust = 0, size = 8)  # Left-align the footnote
+    plot.caption = element_text(hjust = 0, size = 10)  # Left-align the footnote
   )
 
 Graph_2
+
+```
+
+### Percent Infection and Infection Type by Race
+
+```{r, message = FALSE, warning = FALSE, echo = TRUE}
+#percentage stats
+
+CA_race_table <- CA_race %>% mutate(percent_infected = (total_infections/total_population)*100, percent_severe_of_infected = (total_severe/total_infections) * 100, percent_unrecovered_of_infected = (total_unrecovered/total_infections)*100)
+
+#cleaning dataframe
+
+CA_race_table <- select(CA_race_table, -total_infections, -total_unrecovered, -total_severe, -total_population, -total_infections_pct, -total_unrecovered_pct, -total_severe_pct)
+
+#percent infection table by race
+
+race_kable <- kable(
+  CA_race_table,
+  col.names = c('Race/Ethnicity', 'Percent Infected', 'Percentage of Severe Cases among Infected', 'Percentage of Unrecovered Cases among Infected'),
+  digits = 1,
+  align = c('l', 'c', 'c', 'c'),
+  caption = "Novel Respiratory Disease Infection Percentages by Race/Ethnicity"
+) %>%
+  kable_styling(full_width = FALSE, position = "center") %>%
+  footnote(
+    general_title = "<b>Interpretation:</b>",
+    general = "The group with the highest percent of infection is American Indian or Alaska Native. However, the group with the highest percentage of severe cases and unrecovered cases is White. The Multiracial group has the lowest percentage of infection, severe infections, and unrecovered infections.",
+    escape = FALSE
+  ) 
+
+race_kable
 
 ```
 
@@ -264,9 +296,10 @@ Max_Total_Severe = max(total_severe, na.rm = TRUE),
 Min_Total_Severe = min(total_severe, na.rm = TRUE)   ) %>% 
   as.list() 
 
+str(pop_aggregate)
 # Population statistics 
-pop_stats <- pop_aggregate %>%   ungroup() %>%   summarise(Mean_Population = mean(pop_aggregate, na.rm = TRUE),     
-Max_Population = max(pop_aggregate, na.rm = TRUE),     Min_Population = min(pop_aggregate, na.rm = TRUE)   )   
+pop_stats <- pop_aggregate %>% ungroup() %>%  summarise(Mean_Population = mean(pop_aggregate$total_population, na.rm = TRUE),     
+Max_Population = max(pop_aggregate$total_population, na.rm = TRUE),     Min_Population = min(pop_aggregate$total_population, na.rm = TRUE)   )   
 
 #Create statistics table manually 
 Element_stats <- data.frame(   
@@ -276,24 +309,3 @@ Element_stats %>%   kable("html", col.names = c("Variable Name", "Statistics")) 
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"))  %>% 
   add_header_above(c("Summary Statistics" = 2))
 ```
-Percent Infection and Infection Type by Race
-
-{r}
-
-#percentage stats
-
-CA_race_table <- CA_race %>% mutate(percent_infected = (total_infections/total_population)*100, percent_severe_of_infected = (total_severe/total_infections) * 100, percent_unrecovered_of_infected = (total_unrecovered/total_infections)*100)
-
-#cleaning dataframe
-
-CA_race_table <- select(CA_race_table, -total_infections, -total_unrecovered, -total_severe, -total_population, -total_infections_pct, -total_unrecovered_pct, -total_severe_pct)
-
-#percent infection table by race
-
-race_kable <- kable(CA_race_table,
-      col.names = c('Race/Ethnicity', 'Percent Infected', 'Percent Severe Infection of the Infected', 'Percent Unrecovered of the Infected'), 
-      digits = 1, align = c('l', 'c', 'c', 'c'), 
-      caption = "Infection Percentages by Race/Ethnicity") %>% footnote(general_title = "Interpretation:", general = "The group with the highest percent of infection is American Indian or Alaska Native but the group with the highest percent of severe infection and unrecovered infection is white. Multiracial people have the lowest percent of infection, severe infection, and unrecovered infection.")
-
-```
-
