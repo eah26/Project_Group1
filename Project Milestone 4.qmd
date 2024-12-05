@@ -246,8 +246,15 @@ Graph_2
 ```{r visualizations2, message = FALSE, echo = TRUE}
 
 # Calculate percentages for counties
+CA_county_agg <- Counties_final %>%
+  select(-race_eth, -total_infections_pct, -total_unrecovered_pct,-total_severe_pct) %>%  # Remove the race_eth column
+  group_by(county) %>%  # Group by county
+  summarize(across(everything(), ~round(sum(., na.rm = TRUE),0)) ) # Sum all other columns
 
-Counties_pct <- county_only %>%
+# View the collapsed data
+head(CA_county_agg)
+
+Counties_pct <- CA_county_agg %>%
   mutate(total_infections_pct = round((total_infections / total_population) * 100, 2),
 total_unrecovered_pct = round((total_unrecovered / total_population) * 100, 2),
 total_severe_pct = round((total_severe / total_population) * 100, 2)
@@ -272,7 +279,7 @@ ggplot(top_10_counties_pct, aes(x = reorder(county, -value), y = value, fill = m
   geom_bar(stat = "identity", position = "dodge") +  # Create side-by-side bars
   labs(
     title = "Top Ten Counties by Percent of Population Affected by
-    Novel Respiratory Disease in California as of 2023",
+    Novel Respiratory Disease in California, 2023",
     x = "County",
     y = "Percent of Total Population",
     fill = "Category",
