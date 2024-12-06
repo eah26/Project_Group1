@@ -324,7 +324,7 @@ race_kable <- kable(
   col.names = c('Race/Ethnicity', 'Percent Infected', 'Percentage of Severe Cases among Infected', 'Percentage of Unrecovered Cases among Infected'),
   digits = 1,
   align = c('l', 'c', 'c', 'c'),
-  caption = "Novel Respiratory Disease Infection Percentages by Race/Ethnicity"
+  caption = "Novel Respiratory Disease Infection Percentages by Race/Ethnicity, California 2023"
 ) %>%
   kable_styling(full_width = FALSE, position = "center") %>%
   footnote(
