@@ -1,0 +1,332 @@
+---
+title: "Project Milestone 5"
+author: "Group 1"
+format: html
+editor: visual
+---
+
+## Group 1- Project Milestone #5
+
+#### **Scenario 1: Infectious disease outbreak (simulated) in California**
+
+### Problem Statement
+
+The California Department of Public Health (CDPH) works to protect public health in California and fosters positive health outcomes for individuals, families, and communities. The Department’s programs and services, implemented in collaboration with local health departments and state, federal, and private partners, impact the lives of every Californian. The CDPH is responsible for monitoring and responding to a simulated outbreak of a novel infectious respiratory disease within the state. Outbreak data shows variations in case counts and severity by demographic categories (age, race, sex) and geographic regions (counties). However, the data is fragmented across three separate datasets, creating challenges in understanding the disease's progression, its disproportionate impact on specific populations or regions, and the allocation of limited prevention and treatment resources.
+
+To address this issue, integrating data is necessary from counties across California (excluding Los Angeles County), population and morbidity data specific to Los Angeles County, and 2023 population estimates for all counties. Without harmonizing and analyzing these datasets, the CDPH cannot effectively identify high-risk populations, geographic hotspots, or establish equitable strategies for resource allocation. Closing these gaps is critical to ensuring timely and targeted public health interventions during this simulated outbreak.
+
+### Methods
+
+#### Source & Dates
+
+Dataset one (sim_novelid_CA.csv) contains weekly data about cases and case severity by demographic categories to include age category, race, sex and geographic categories (county) for California counties, except for Los Angeles. The data also includes simulated novel infectious respiratory disease case reporting for California (excluding LA County). It contains case severity by demographic categories and county for the time period from May 28, 2023 to December 30, 2023.
+
+Dataset two (sim_novelid_LACounty.csv) contains population data by similar demographic and geographic categories for Los Angeles county. This data set contains morbidity and population data by similar demographic and geographic categories including sex, race/ethnicity, and age category. Morbidity data includes newly diagnosed cases of the respiratory infection, infected cumulative cases, new unrecovered cases, cumulative unrecovered cases, new severe cases, and cumulative severe cases for the time period of May 29, 2023 to December 25, 2023.
+
+Dataset three (ca_pop_2023.csv) contains population estimate data by demographic category and county for 2023. County-level demographic data includes health officer region, age category, sex, and race.
+
+#### Description of Cleaning Activities
+
+For dataset one, the race_ethnicity variable was converted from numeric codes to descriptive text, and the date was reformatted from epidemiological weeks to a standard date format. The term "county" was removed from the county column. Additionally, column names in both dataset one and dataset two were standardized for consistency. For dataset two, a new column named county was added and populated with "Los Angeles" as the value. The date was reformatted to align with the standard format used in other datasets. Dataset one and dataset two were then merged using a full join. Data was then aggregated by race/ethnicity and county. In dataset three, race/ethnicity group names were adjusted to match those in datasets one and two, and age categories were recorded to align with the four age groups used in the other datasets. Finally, the merged output of datasets one and two was combined with dataset three with rate columns added. We also added a data dictionary and data element statistics summary for easy interpretation of the variables within the merged data set.
+
+#### Analytic Methods
+
+For the final dataset, we added rate columns for each county and race/ethnicity, showing the percentage of total infections, unrecovered cases, and severe cases. We visualized the data with bar graphs, plotting infection percentages by race/ethnicity, including total infections, severe cases, and unrecovered cases. Similar visualizations were created for the most affected counties.
+
+### Results
+
+Regarding race/ethnicity the results showed that American Indian/Alaska Native had the highest infection rate at 14.0% followed by White with an infection rate of about 12.8%. The Asian and Multiracial groups had the lowest infection rates at about 8.7% and 7.2%, respectively. Severe and unaffected cases follow the same pattern on the basis of race and ethnicity. Amongst infected individuals, White people had the highest rate of severe infection at 3.6% followed by American Indian/Alaska Natives and Asians, both at 3.0%. Multiracial individuals and Hispanic individuals of any race had the lowest rate of severe infection at 1.9% and 2.0%, respectively. Similarly, amongst infected individuals, the White and Asian groups had the highest rate of being unrecovered with 15.6% for White and 13.4% for Asian. In the Multiracial and Hispanic groups, there was the lowest rate of unrecovered individuals at 8.6% and 9.2%, respectively. 
+
+When comparing infection rates across counties, Imperial county located in Southern California had the highest infection rate at nearly 45%. Counties in the Central Valley had some of the highest infection rates including Kern (30%), Tulare (24%), Kings (23%), Merced (23%), Colusa (21%), Tehama (19%), and Stanislaus (19%).
+
+```{r, include = F}
+library (dplyr) 
+library (tidyverse) 
+library (tidyr)
+library (snakecase) 
+install.packages ("MMWRweek")
+library(MMWRweek)# Create MMWR week strings 
+library (kableExtra)
+library (ggplot2)
+```
+
+```{r import_data, include = FALSE}
+#import DataSet#1 from GitHub (sim_novelid_CA.csv)
+CA_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_CA.csv") %>%  
+  rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE)))  
+
+#Dataset two (sim_novelid_LACounty.csv)
+LACounty_data <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/sim_novelid_LACounty.csv") %>%   
+  rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE))) 
+
+#Import Dataset three (population dataset)
+DS3 <- read.csv("https://raw.githubusercontent.com/PHW290/phw251_projectdata/refs/heads/main/scenario_1/ca_pop_2023.csv") %>%   rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE)))
+```
+
+```{r renameCA_data, include = FALSE}
+#Rename columns to new column names, add date column in date format 
+CA_data_clean <-  CA_data %>%   
+  rename (race_eth = race_ethnicity) %>%   
+  rename (infections_new = new_infections) %>%  
+  rename (infected_cum = cumulative_infected) %>%   
+  rename (unrecovered_new = new_unrecovered)%>%   
+  rename (unrecovered_cum = cumulative_unrecovered) %>%  
+  rename (severe_new = new_severe) %>%   
+  rename (severe_cum = cumulative_severe) %>%   
+  mutate(     year = as.numeric(substr(time_int, 1, 4)),  # Extract the year   
+mmwr_week = as.numeric(substr(time_int, 5, 6)),  # Extract the week    
+date = MMWRweek2Date(MMWRyear = year, MMWRweek = mmwr_week)  # Convert to date  
+) %>%   
+  select (-dt_diagnosis, -year, -mmwr_week, -time_int)  #Remove word "county" in the county column
+
+CA_data_clean <- CA_data_clean %>%   mutate(county = gsub("\\County\\b", "", county)) 
+
+#Recode race_eth column to convert numbers to descriptions same as LACounty data 
+CA_data_clean <- CA_data_clean %>%   
+  mutate(     race_eth = recode(race_eth, `1` = "White, Non-Hispanic",`2` = "Black, Non-Hispanic", `3` = "American Indian or Alaska Native, Non-Hispanic",`4` = "Asian, Non-Hispanic",`5` = "Native Hawaiian or Pacific Islander, Non-Hispanic",`6` = "Multiracial (two or more of above races), Non-Hispanic",`7` = "Hispanic (any race)",       `9` = "Unknown")   
+              ) 
+
+#head(CA_data_clean)
+str(CA_data_clean) 
+#unique(CA_data_clean$race_eth)}
+```
+
+```{r cleanLA_data, include = FALSE}
+#LA Dataset cleaned  
+LA_data_clean <- LACounty_data %>%   
+  mutate(county = "Los Angeles") %>%  
+  rename(age_cat = age_category, date =  dt_dx, infections_new = dx_new, infected_cum = infected_cumulative,          unrecovered_cum = unrecovered_cumulative,severe_cum = severe_cumulative) %>%  
+  mutate(date = as.Date(date, format = "%d%b%Y")) %>%   
+  select(county, age_cat, sex, race_eth, infections_new, infected_cum,unrecovered_new, unrecovered_cum, severe_new, severe_cum, date)  
+
+#head(LA_data_clean) 
+str(LA_data_clean)
+```
+
+```{r join_morbidity, include = FALSE, warning= FALSE, message = FALSE}
+#Join CA_data_clean with LA_data_clean 
+Counties_join <- full_join (CA_data_clean, LA_data_clean) %>%   
+  arrange (county) 
+
+#Aggregate by Race/Ethnicity 
+Counties_race <- Counties_join %>%   
+  group_by(county, race_eth) %>%   
+  summarize (total_infections = sum(infections_new),total_unrecovered = sum (unrecovered_new),              total_severe = sum (severe_new)) %>%   
+  ungroup()  
+
+head(Counties_race)
+```
+
+```{r cleanpop_data, include = FALSE}
+DS3 <- DS3 %>% mutate(race7 = recode(race7, `WhiteTE NH` = "White, Non-Hispanic", `Black NH` = "Black, Non-Hispanic", `AIAN NH` = "American Indian or Alaska Native, Non-Hispanic", `Asian NH` = "Asian, Non-Hispanic", `NHPI NH` = "Native Hawaiian or Pacific Islander, Non-Hispanic", `MR NH` = "Multiracial (two or more of above races), Non-Hispanic", `Hispanic` = "Hispanic (any race)" )) 
+
+#rename race column to match 
+DS3 <- rename(DS3, race_eth = race7)
+```
+
+```{r popages, include = FALSE}
+DS3_clean <- DS3 %>% mutate(age_cat = recode(age_cat, "0-4" = "0-17", "5-11" = "0-17", "12-17" = "0-17")) 
+
+```
+
+```{r aggregate, include = FALSE,  message = FALSE}
+
+#Aggregate by race for each county  
+pop_aggregate <- DS3_clean %>%   
+  group_by(county, race_eth) %>%    
+  summarize(total_population = sum(pop)) %>%
+  ungroup ()
+```
+
+```{r join datasets and rate, warning = FALSE, message = FALSE, include = FALSE}
+#str(Counties_race)
+#str(pop_aggregate)
+
+#make sure data matches for all datasets
+library(stringr)
+
+Counties_race <- Counties_race %>%
+  mutate(county = str_to_title(str_trim(county)),
+         race_eth = str_to_title(str_trim(race_eth)))
+
+pop_aggregate <- pop_aggregate %>%
+  mutate(county = str_to_title(str_trim(county)),
+         race_eth = str_to_title(str_trim(race_eth)))
+
+
+#join County aggregated by race with population dataset
+Counties_final <- Counties_race %>%
+  inner_join (pop_aggregate, by = c("county", "race_eth")) %>%
+  arrange(county) 
+
+#Add rate (% population columns)
+Counties_final <- Counties_final %>%
+  mutate(
+    total_infections_pct = round((total_infections / total_population) * 100,2),
+    total_unrecovered_pct = round((total_unrecovered / total_population) * 100,2),
+    total_severe_pct = round((total_severe / total_population) * 100,2)
+  )
+
+Counties_final <- Counties_final %>%
+  mutate(across(everything(), ~replace(., is.nan(.), 0)))
+  #mutate(race_eth = case_when(
+   # race_eth == "American Indian Or Alaska Native, Non-Hispanic" ~ "American Indian or Alaska Native",
+    #TRUE ~ race_eth
+#  ))
+
+str (Counties_final)
+
+```
+
+```{r visualizations, message = FALSE, echo = FALSE}
+
+CA_agg_by_race_only <- Counties_final %>%
+  group_by(race_eth) %>%
+  summarize (total_infections = sum(total_infections),
+             total_unrecovered = sum (total_unrecovered),
+             total_severe = sum (total_severe),
+             total_population = sum(total_population))
+
+CA_race <- CA_agg_by_race_only %>% 
+  mutate(
+    total_infections_pct = round((total_infections / total_population) * 100,2),
+    total_unrecovered_pct = round((total_unrecovered / total_population) * 100,2),
+    total_severe_pct = round((total_severe / total_population) * 100,2)
+  )
+
+#Pivot data for side by side bar graph
+data_long_pct <- CA_race %>%
+  pivot_longer(cols = c(total_infections_pct, total_unrecovered_pct, total_severe_pct),
+               names_to = "metric", values_to = "value")
+
+#Bar Graph
+Graph_2 <- ggplot(data_long_pct, aes(x = race_eth, y = value, fill = metric)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "California Novel Respiratory Disease Infections \nby Race/Ethnicity, 2023",
+    x = "Race Category",
+    y = "Percent of Total Population",
+    fill = "Infection Category",  # Renaming the legend title
+    caption = "Interpretation: Data represents percentages of infection categories calculated based on total population
+    \n per race/ethnicity. The graph shows the Race Categories most affected are Alaska Native, White, 
+    \n Black and Hispanic with Asian and Multiracial least affected. The percentage of severe and unaffected
+    \n cases follow the same pattern." # Adding a footnote
+  ) +
+  scale_fill_manual(
+    values = c("total_infections_pct" = "skyblue", 
+               "total_unrecovered_pct" = "orange", 
+               "total_severe_pct" = "red"),
+    labels = c("Total Infections", "Total Unrecovered", "Total Severe")  # Renaming the legend categories
+  ) +
+  scale_x_discrete(labels = function(x) ifelse(nchar(x) > 19, paste(substr(x, 1, 19), "\n", substr(x, 20, nchar(x))), x)) +  
+  # Add line break for long labels
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    axis.text.y = element_text(size = 10),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    plot.caption = element_text(hjust = 0, size = 10)  # Left-align the footnote
+  )
+
+Graph_2
+
+```
+
+```{r visualizations2, message = FALSE, echo = FALSE}
+
+# Calculate percentages for counties
+CA_county_agg <- Counties_final %>%
+  select(-race_eth, -total_infections_pct, -total_unrecovered_pct,-total_severe_pct) %>%  # Remove the race_eth column
+  group_by(county) %>%  # Group by county
+  summarize(across(everything(), ~round(sum(., na.rm = TRUE),0)) ) # Sum all other columns
+
+
+Counties_pct <- CA_county_agg %>%
+  mutate(total_infections_pct = round((total_infections / total_population) * 100, 2),
+total_unrecovered_pct = round((total_unrecovered / total_population) * 100, 2),
+total_severe_pct = round((total_severe / total_population) * 100, 2)
+  )
+
+CA_county_only <- Counties_pct %>%
+  arrange(desc(total_infections_pct)) %>%
+  slice_head(n = 10)
+
+# Pivot the data to a long format for plotting
+top_10_counties_pct <- CA_county_only %>%
+  select(county, total_infections_pct, total_unrecovered_pct, total_severe_pct) %>%
+  pivot_longer(
+    cols = c(total_infections_pct, total_unrecovered_pct, total_severe_pct),
+    names_to = "metric",
+    values_to = "value"
+  )
+
+# Create the bar plot
+
+ggplot(top_10_counties_pct, aes(x = reorder(county, -value), y = value, fill = metric)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Create side-by-side bars
+  labs(
+    title = "Top Ten Counties by Percent of Population Affected by
+    Novel Respiratory Disease in California, 2023",
+    x = "County",
+    y = "Percent of Total Population",
+    fill = "Category",
+    caption = "Interpretation: 
+    Graph shows top ten most affected counties with Imperial
+    having the highest percentage of infected people, 
+    along with severe and unrecovered cases."
+  ) +
+  scale_fill_manual(
+    values = c(
+      total_infections_pct = "skyblue",
+      total_unrecovered_pct = "orange",
+      total_severe_pct = "red"
+    ),
+    labels = c("Total Infections", "Total Unrecovered", "Total Severe")
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    axis.text.y = element_text(size = 10),
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    axis.title = element_text(size = 12),
+    plot.caption = element_text(size = 10, hjust = 0)
+  )
+```
+
+```{r race table, message = FALSE, warning = FALSE, echo = FALSE}
+#percentage stats
+
+CA_race_table <- CA_race %>% mutate(percent_infected = (total_infections/total_population)*100, percent_severe_of_infected = (total_severe/total_infections) * 100, percent_unrecovered_of_infected = (total_unrecovered/total_infections)*100)
+
+#cleaning dataframe
+
+CA_race_table <- select(CA_race_table, -total_infections, -total_unrecovered, -total_severe, -total_population, -total_infections_pct, -total_unrecovered_pct, -total_severe_pct)
+
+#percent infection table by race
+
+race_kable <- kable(
+  CA_race_table,
+  col.names = c('Race/Ethnicity', 'Percent Infected', 'Percentage of Severe Cases among Infected', 'Percentage of Unrecovered Cases among Infected'),
+  digits = 1,
+  align = c('l', 'c', 'c', 'c'),
+  caption = "California Novel Respiratory Disease Infection Percentages by Race/Ethnicity, 2023"
+) %>%
+  kable_styling(full_width = FALSE, position = "center") %>%
+  footnote(
+    general_title = "<b>Interpretation:</b>",
+    general = "The group with the highest percent of infection is American Indian or Alaska Native. However, the group with the highest percentage of severe cases and unrecovered cases is White. The Multiracial group has the lowest percentage of infection, severe infections, and unrecovered infections.",
+    escape = FALSE
+  ) 
+
+race_kable
+
+```
+
+### Discussion
+
+In analyzing the 2023 novel respiratory disease outbreak across California counties, several notable patterns emerged.  Infection rates were disproportionately high among specific racial and ethnic groups, particularly American Indian/Alaska Native and White populations. These disparities may stem from socioeconomic factors, education level, and subsequent access to healthcare. Socioeconomic status may impact the type of work individuals perform, impacting their proximity to others, ability to stay home when sick, and physical exertion required.  These factors collectively may impact the risk of contracting the disease, the severity of symptoms, and recovery outcomes.  
+Geographically, significant differences in infection rates were observed, with Imperial County and areas within the Central Valley showing notable high prevalence. Agricultural practices, including pesticide use and exposure to environmental toxins, may exacerbate respiratory symptoms and contribute to increased disease transmission and severity in the Central Valley. 
+Given these findings, we recommend prevention and treatment resources be focused on these top 10 counties, with particular focus on addressing the needs of vulnerable populations to reduce disparities and improve health outcomes. 
+
