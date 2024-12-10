@@ -35,9 +35,9 @@ For the final dataset, we added rate columns for each county and race/ethnicity,
 
 ### Results
 
-Regarding race/ethnicity the results showed that American Indian/Alaska Native had the highest infection rate at 14.0% followed by White with an infection rate of about 12.8%. The Asian and Multiracial groups had the lowest infection rates at about 8.7% and 7.2%, respectively. Severe and unaffected cases follow the same pattern on the basis of race and ethnicity. Amongst infected individuals, White people had the highest rate of severe infection at 3.6% followed by American Indian/Alaska Natives and Asians, both at 3.0%. Multiracial individuals and Hispanic individuals of any race had the lowest rate of severe infection at 1.9% and 2.0%, respectively. Similarly, amongst infected individuals, the White and Asian groups had the highest rate of being unrecovered with 15.6% for White and 13.4% for Asian. In the Multiracial and Hispanic groups, there was the lowest rate of unrecovered individuals at 8.6% and 9.2%, respectively. 
+Regarding race/ethnicity the results showed that American Indian/Alaska Native had the highest incidence rate of infection at 14.0 per 100 people followed by White with an infection rate of about 12.8 per 100 people. The Asian and Multiracial groups had the lowest infection rates at about 8.7 per 100 people and 7.2 per 100 people, respectively. Severe and unaffected cases follow the same pattern on the basis of race and ethnicity. Amongst infected individuals, White people had the highest rate of severe infection at 3.6 per 100 people followed by American Indian/Alaska Natives and Asians, both at 3.0 per 100 people. Multiracial individuals and Hispanic individuals of any race had the lowest rate of severe infection at 1.9 per 100 people and 2.0 per 100 people, respectively. Similarly, amongst infected individuals, the White and Asian groups had the highest rate of being unrecovered with 15.6 per 100 people for White and 13.4 per 100 people for Asian. In the Multiracial and Hispanic groups, there was the lowest rate of unrecovered individuals at 8.6 per 100 people and 9.2 per 100 people, respectively. 
 
-When comparing infection rates across counties, Imperial county located in Southern California had the highest infection rate at nearly 45%. Counties in the Central Valley had some of the highest infection rates including Kern (30%), Tulare (24%), Kings (23%), Merced (23%), Colusa (21%), Tehama (19%), and Stanislaus (19%).
+When comparing infection rates across counties, Imperial county located in Southern California had the highest incidence rate at nearly 45 cases per 100 people. Counties in the Central Valley had some of the highest incidence rates of infection including Kern (30 per 100 people), Tulare (24 per 100 people), Kings (23 per 100 people), Merced (23 per 100 people), Colusa (21 per 100 people), Tehama (19 per 100 people), and Stanislaus (19 per 100 people).
 
 ```{r, include = F}
 library (dplyr) 
@@ -296,7 +296,8 @@ ggplot(top_10_counties_pct, aes(x = reorder(county, -value), y = value, fill = m
 ```
 
 ```{r race table, message = FALSE, warning = FALSE, echo = FALSE}
-#percentage stats
+
+#incidence rate stats
 
 CA_race_table <- CA_race %>% mutate(percent_infected = (total_infections/total_population)*100, percent_severe_of_infected = (total_severe/total_infections) * 100, percent_unrecovered_of_infected = (total_unrecovered/total_infections)*100)
 
@@ -304,19 +305,18 @@ CA_race_table <- CA_race %>% mutate(percent_infected = (total_infections/total_p
 
 CA_race_table <- select(CA_race_table, -total_infections, -total_unrecovered, -total_severe, -total_population, -total_infections_pct, -total_unrecovered_pct, -total_severe_pct)
 
-#percent infection table by race
+#incidence rate of infection table by race
 
 race_kable <- kable(
   CA_race_table,
-  col.names = c('Race/Ethnicity', 'Percent Infected', 'Percentage of Severe Cases among Infected', 'Percentage of Unrecovered Cases among Infected'),
+  col.names = c('Race/Ethnicity', 'IR of Disease', 'IR of Severe Disease among Infected', 'IR of Unrecovered Disease among Infected'),
   digits = 1,
   align = c('l', 'c', 'c', 'c'),
-  caption = "California Novel Respiratory Disease Infection Percentages by Race/Ethnicity, 2023"
+  caption = "California Novel Respiratory Disease Incidence Rates (per 100 people) by Race/Ethnicity, 2023"
 ) %>%
   kable_styling(full_width = FALSE, position = "center") %>%
   footnote(
     general_title = "<b>Interpretation:</b>",
-    general = "The group with the highest percent of infection is American Indian or Alaska Native. However, the group with the highest percentage of severe cases and unrecovered cases is White. The Multiracial group has the lowest percentage of infection, severe infections, and unrecovered infections.",
     escape = FALSE
   ) 
 
