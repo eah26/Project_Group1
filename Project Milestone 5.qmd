@@ -25,19 +25,17 @@ Dataset two (sim_novelid_LACounty.csv) contains population data by similar demog
 
 Dataset three (ca_pop_2023.csv) contains population estimate data by demographic category and county for 2023. County-level demographic data includes health officer region, age category, sex, and race.
 
-#### Description of Cleaning Activities
+#### Description of Cleaning Activities/Analytic Methods
 
-For dataset one, the race_ethnicity variable was converted from numeric codes to descriptive text, and the date was reformatted from epidemiological weeks to a standard date format. The term "county" was removed from the county column. Additionally, column names in both dataset one and dataset two were standardized for consistency. For dataset two, a new column named county was added and populated with "Los Angeles" as the value. The date was reformatted to align with the standard format used in other datasets. Dataset one and dataset two were then merged using a full join. Data was then aggregated by race/ethnicity and county. In dataset three, race/ethnicity group names were adjusted to match those in datasets one and two, and age categories were recorded to align with the four age groups used in the other datasets. Finally, the merged output of datasets one and two was combined with dataset three with rate columns added. We also added a data dictionary and data element statistics summary for easy interpretation of the variables within the merged data set.
-
-#### Analytic Methods
+For all datasets, the race_ethnicity variable was converted from numeric codes to descriptive text, age groups were standardized, and the date was reformatted from epidemiological weeks to a standard date format. Additionally, column names were standardized (added or removed) for consistency. Datasets were then merged and aggregated by race/ethnicity and counts.
 
 For the final dataset, we added rate columns for each county and race/ethnicity, showing the percentage of total infections, unrecovered cases, and severe cases. We visualized the data with bar graphs, plotting infection percentages by race/ethnicity, including total infections, severe cases, and unrecovered cases. Similar visualizations were created for the most affected counties.
 
 ### Results
 
-Regarding race/ethnicity the results showed that American Indian/Alaska Native had the highest incidence rate of infection at 14.0 per 100 people followed by White with an infection rate of about 12.8 per 100 people. The Asian and Multiracial groups had the lowest infection rates at about 8.7 per 100 people and 7.2 per 100 people, respectively. Severe and unaffected cases follow the same pattern on the basis of race and ethnicity. Amongst infected individuals, White people had the highest rate of severe infection at 3.6 per 100 people followed by American Indian/Alaska Natives and Asians, both at 3.0 per 100 people. Multiracial individuals and Hispanic individuals of any race had the lowest rate of severe infection at 1.9 per 100 people and 2.0 per 100 people, respectively. Similarly, amongst infected individuals, the White and Asian groups had the highest rate of being unrecovered with 15.6 per 100 people for White and 13.4 per 100 people for Asian. In the Multiracial and Hispanic groups, there was the lowest rate of unrecovered individuals at 8.6 per 100 people and 9.2 per 100 people, respectively. 
+Figure 1 data represents percentages of infection categories calculated based on total population per race/ethnicity. The graph shows the race categories most affected are American Indian/Alaska Native, White, Black and Hispanic with Asian and Multiracial least affected. The percentage of severe and unaffected cases follow the same pattern.  Table 1 race/ethnicity categories show that American Indian/Alaska Native had the highest incidence rate of infection at 14.0 per 100 people followed by White with an infection rate of approximately 12.8 per 100 people. The Asian and Multiracial groups had the lowest infection rates at about 8.7 per 100 people and 7.2 per 100 people, respectively. Severe and unaffected cases follow the same pattern on the basis of race and ethnicity. Amongst infected individuals, White people had the highest rate of severe infection at 3.6 per 100 people followed by American Indian/Alaska Natives and Asians, both at 3.0 per 100 people. Multiracial individuals and Hispanic individuals of any race had the lowest rate of severe infection at 1.9 per 100 people and 2.0 per 100 people, respectively. Similarly, amongst infected individuals, the White and Asian groups had the highest rate of being unrecovered with 15.6 per 100 people for White and 13.4 per 100 people for Asian. In the Multiracial and Hispanic groups, there was the lowest rate of unrecovered individuals at 8.6 per 100 people and 9.2 per 100 people, respectively. 
 
-When comparing infection rates across counties, Imperial county located in Southern California had the highest incidence rate at nearly 45 cases per 100 people. Counties in the Central Valley had some of the highest incidence rates of infection including Kern (30 per 100 people), Tulare (24 per 100 people), Kings (23 per 100 people), Merced (23 per 100 people), Colusa (21 per 100 people), Tehama (19 per 100 people), and Stanislaus (19 per 100 people).
+Figure 2 shows the top ten most affected counties with Imperial, located in Southern California, having the highest incidence rate of nearly 45 cases per 100 people. Imperial county also had the highest rate of severe and unrecovered cases. Counties in the Central Valley had some of the highest incidence rates of infection including Kern (30 per 100 people), Tulare (24 per 100 people), Kings (23 per 100 people), Merced (23 per 100 people), Colusa (21 per 100 people), Tehama (19 per 100 people), and Stanislaus (19 per 100 people).
 
 ```{r, include = F}
 library (dplyr) 
@@ -203,14 +201,10 @@ data_long_pct <- CA_race %>%
 Graph_2 <- ggplot(data_long_pct, aes(x = race_eth, y = value, fill = metric)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(
-    title = "California Novel Respiratory Disease Infections \nby Race/Ethnicity, 2023",
+    title = "Figure 1. California Novel Respiratory Disease Infections \nby Race/Ethnicity, 2023",
     x = "Race Category",
     y = "Percent of Total Population",
     fill = "Infection Category",  # Renaming the legend title
-    caption = "Interpretation: Data represents percentages of infection categories calculated based on total population
-    \n per race/ethnicity. The graph shows the Race Categories most affected are Alaska Native, White, 
-    \n Black and Hispanic with Asian and Multiracial least affected. The percentage of severe and unaffected
-    \n cases follow the same pattern." # Adding a footnote
   ) +
   scale_fill_manual(
     values = c("total_infections_pct" = "skyblue", 
@@ -231,6 +225,30 @@ Graph_2 <- ggplot(data_long_pct, aes(x = race_eth, y = value, fill = metric)) +
   )
 
 Graph_2
+
+```
+```{r race table, message = FALSE, warning = FALSE, echo = FALSE}
+
+#incidence rate stats
+
+CA_race_table <- CA_race %>% mutate(percent_infected = (total_infections/total_population)*100, percent_severe_of_infected = (total_severe/total_infections) * 100, percent_unrecovered_of_infected = (total_unrecovered/total_infections)*100)
+
+#cleaning dataframe
+
+CA_race_table <- select(CA_race_table, -total_infections, -total_unrecovered, -total_severe, -total_population, -total_infections_pct, -total_unrecovered_pct, -total_severe_pct)
+
+#incidence rate of infection table by race
+
+race_kable <- kable(
+  CA_race_table,
+  col.names = c('Race/Ethnicity', 'IR of Disease', 'IR of Severe Disease among Infected', 'IR of Unrecovered Disease among Infected'),
+  digits = 1,
+  align = c('l', 'c', 'c', 'c'),
+  caption = "Table 1. California Novel Respiratory Disease Incidence Rates (per 100 people) by Race/Ethnicity, 2023"
+) %>%
+  kable_styling(full_width = FALSE, position = "center")
+
+race_kable
 
 ```
 
@@ -267,15 +285,11 @@ top_10_counties_pct <- CA_county_only %>%
 ggplot(top_10_counties_pct, aes(x = reorder(county, -value), y = value, fill = metric)) +
   geom_bar(stat = "identity", position = "dodge") +  # Create side-by-side bars
   labs(
-    title = "Top Ten Counties by Percent of Population Affected by
+    title = "Figure 2. Top Ten Counties by Percent of Population Affected 
     Novel Respiratory Disease in California, 2023",
     x = "County",
     y = "Percent of Total Population",
-    fill = "Category",
-    caption = "Interpretation: 
-    Graph shows top ten most affected counties with Imperial
-    having the highest percentage of infected people, 
-    along with severe and unrecovered cases."
+    fill = "Category"
   ) +
   scale_fill_manual(
     values = c(
@@ -294,36 +308,6 @@ ggplot(top_10_counties_pct, aes(x = reorder(county, -value), y = value, fill = m
     plot.caption = element_text(size = 10, hjust = 0)
   )
 ```
-
-```{r race table, message = FALSE, warning = FALSE, echo = FALSE}
-
-#incidence rate stats
-
-CA_race_table <- CA_race %>% mutate(percent_infected = (total_infections/total_population)*100, percent_severe_of_infected = (total_severe/total_infections) * 100, percent_unrecovered_of_infected = (total_unrecovered/total_infections)*100)
-
-#cleaning dataframe
-
-CA_race_table <- select(CA_race_table, -total_infections, -total_unrecovered, -total_severe, -total_population, -total_infections_pct, -total_unrecovered_pct, -total_severe_pct)
-
-#incidence rate of infection table by race
-
-race_kable <- kable(
-  CA_race_table,
-  col.names = c('Race/Ethnicity', 'IR of Disease', 'IR of Severe Disease among Infected', 'IR of Unrecovered Disease among Infected'),
-  digits = 1,
-  align = c('l', 'c', 'c', 'c'),
-  caption = "California Novel Respiratory Disease Incidence Rates (per 100 people) by Race/Ethnicity, 2023"
-) %>%
-  kable_styling(full_width = FALSE, position = "center") %>%
-  footnote(
-    general_title = "<b>Interpretation:</b>",
-    escape = FALSE
-  ) 
-
-race_kable
-
-```
-
 ### Discussion
 
 In analyzing the 2023 novel respiratory disease outbreak across California counties, several notable patterns emerged.  Infection rates were disproportionately high among specific racial and ethnic groups, particularly American Indian/Alaska Native and White populations. These disparities may stem from socioeconomic factors, education level, and subsequent access to healthcare. Socioeconomic status may impact the type of work individuals perform, impacting their proximity to others, ability to stay home when sick, and physical exertion required.  These factors collectively may impact the risk of contracting the disease, the severity of symptoms, and recovery outcomes.  
