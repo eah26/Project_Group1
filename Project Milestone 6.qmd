@@ -225,6 +225,8 @@ Graph_2 <- ggplot(data_long_pct, aes(x = race_eth, y = value, fill = metric)) +
 Graph_2
 
 ```
+
+
 ```{r race table, message = FALSE, warning = FALSE, echo = FALSE}
 
 #incidence rate stats
@@ -249,6 +251,7 @@ race_kable <- kable(
 race_kable
 
 ```
+
 
 ```{r visualizations2, message = FALSE, echo = FALSE}
 
@@ -309,6 +312,7 @@ ggplot(top_10_counties_pct, aes(x = reorder(county, -value), y = value, fill = m
 ### Discussion
 
 In analyzing the 2023 novel respiratory disease outbreak across California counties, several notable patterns emerged.  Infection rates were disproportionately high among specific racial and ethnic groups, particularly American Indian/Alaska Native and White populations. These disparities may stem from socioeconomic factors, education level, and subsequent access to healthcare. Socioeconomic status may impact the type of work individuals perform, impacting their proximity to others, ability to stay home when sick, and physical exertion required.  These factors collectively may impact the risk of contracting the disease, the severity of symptoms, and recovery outcomes.  
+
 Geographically, significant differences in infection rates were observed, with Imperial County and areas within the Central Valley showing notable high prevalence. Agricultural practices, including pesticide use and exposure to environmental toxins, may exacerbate respiratory symptoms and contribute to increased disease transmission and severity in the Central Valley. 
 Given these findings, we recommend prevention and treatment resources be focused on these top 10 counties, with particular focus on addressing the needs of vulnerable populations to reduce disparities and improve health outcomes. 
 
